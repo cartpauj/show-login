@@ -67,11 +67,10 @@ class Show_Login_Assets {
             true
         );
 
-        // Localize script with AJAX data
+        // Localize script with AJAX URL only
+        // Nonce and redirectUrl are fetched dynamically via AJAX (cache-compatible)
         wp_localize_script('show-login', 'showLoginData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('show_login_nonce'),
-            'redirectUrl' => $this->get_redirect_url(),
         ]);
     }
 
@@ -123,7 +122,7 @@ class Show_Login_Assets {
      *
      * @return string Redirect URL.
      */
-    private function get_redirect_url(): string {
+    public function get_redirect_url(): string {
         $current_url = '';
 
         if (isset($_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI'])) {

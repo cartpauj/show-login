@@ -2,61 +2,197 @@
  * Show Login - Front-end JavaScript
  *
  * Handles popup display, form submission, and AJAX authentication.
- * Depends on showLoginData object being localized via wp_localize_script.
+ * Cache-compatible: checks URL parameter and user login status before showing popup.
  */
 (function() {
     'use strict';
 
-    // Show popup on page load
+    /**
+     * Check if ?sl=true parameter is in the URL
+     */
+    function shouldCheckPopup() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('sl') === 'true';
+    }
+
+    /**
+     * Initialize popup on page load
+     */
     document.addEventListener('DOMContentLoaded', function() {
-        const overlay = document.getElementById('show-login-overlay');
-        if (overlay) {
-            overlay.classList.add('show-login-active');
+        // Exit early if ?sl=true is not in URL (most efficient check)
+        if (!shouldCheckPopup()) {
+            return;
         }
+
+        // Show loading popup immediately (better UX while AJAX runs)
+        showLoadingPopup();
+
+        // Check if we should show popup (handles caching + login status)
+        checkAndShowPopup();
     });
 
-    // Close popup functionality
-    const closeBtn = document.getElementById('show-login-close');
-    const overlay = document.getElementById('show-login-overlay');
+    /**
+     * Show popup with loading spinner immediately
+     */
+    function showLoadingPopup() {
+        const loadingHTML = `
+            <div id="show-login-overlay" class="show-login-active">
+                <div id="show-login-popup">
+                    <div class="show-login-loading-state">
+                        <div class="show-login-spinner"></div>
+                        <p>Checking login status...</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', loadingHTML);
+    }
 
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function(e) {
-            e.preventDefault();
+    /**
+     * Check via AJAX if popup should be shown and display it
+     */
+    function checkAndShowPopup() {
+        // Make AJAX request to check login status
+        fetch(showLoginData.ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=show_login_check_popup'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.show) {
+                // User is logged out - replace loading with actual form
+                replaceLoadingWithForm(data.data.html, data.data.nonce, data.data.redirectUrl);
+            } else {
+                // User is already logged in - show success message then close
+                showLoggedInMessage();
+            }
+        })
+        .catch(error => {
+            console.error('Show Login: Failed to check popup status', error);
+            // On error, close the loading popup
             closePopup();
         });
     }
 
-    // Close on overlay click (not popup content)
-    if (overlay) {
-        overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) {
+    /**
+     * Show "You're already logged in!" message before closing
+     */
+    function showLoggedInMessage() {
+        const loadingState = document.querySelector('.show-login-loading-state');
+        if (loadingState) {
+            loadingState.innerHTML = `
+                <div class="show-login-spinner show-login-success"></div>
+                <p>You're already logged in!</p>
+            `;
+        }
+
+        // Close popup after 1 second
+        setTimeout(function() {
+            closePopup();
+        }, 1000);
+    }
+
+    /**
+     * Replace loading state with actual login form
+     */
+    function replaceLoadingWithForm(html, nonce, redirectUrl) {
+        // First, show "You're not logged in" message
+        const loadingState = document.querySelector('.show-login-loading-state');
+        if (loadingState) {
+            loadingState.innerHTML = `
+                <div class="show-login-spinner show-login-info"></div>
+                <p>You're not logged in</p>
+            `;
+        }
+
+        // After 1 second, show the login form
+        setTimeout(function() {
+            // Remove loading popup
+            const overlay = document.getElementById('show-login-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+
+            // Inject actual popup HTML
+            document.body.insertAdjacentHTML('beforeend', html);
+
+            // Update nonce and redirect URL
+            showLoginData.nonce = nonce;
+            showLoginData.redirectUrl = redirectUrl;
+
+            // Initialize popup behavior
+            initializePopup();
+
+            // Show the popup
+            const newOverlay = document.getElementById('show-login-overlay');
+            if (newOverlay) {
+                newOverlay.classList.add('show-login-active');
+            }
+        }, 1000);
+    }
+
+    /**
+     * Initialize popup event handlers
+     */
+    function initializePopup() {
+        const closeBtn = document.getElementById('show-login-close');
+        const overlay = document.getElementById('show-login-overlay');
+        const form = document.getElementById('show-login-form');
+
+        // Close button
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                closePopup();
+            });
+        }
+
+        // Close on overlay click
+        if (overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closePopup();
+                }
+            });
+        }
+
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
                 closePopup();
             }
         });
+
+        // Form submission
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleLogin();
+            });
+        }
     }
 
-    // Close on ESC key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closePopup();
-        }
-    });
-
+    /**
+     * Close popup
+     */
     function closePopup() {
+        const overlay = document.getElementById('show-login-overlay');
         if (overlay) {
             overlay.classList.remove('show-login-active');
+            // Remove after animation completes
+            setTimeout(function() {
+                overlay.remove();
+            }, 300);
         }
     }
 
-    // Handle form submission
-    const form = document.getElementById('show-login-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleLogin();
-        });
-    }
-
+    /**
+     * Handle login form submission
+     */
     function handleLogin() {
         const username = document.getElementById('show-login-username').value;
         const password = document.getElementById('show-login-password').value;
@@ -111,6 +247,9 @@
         });
     }
 
+    /**
+     * Display error message
+     */
     function showError(message) {
         const errorDiv = document.getElementById('show-login-error');
         errorDiv.innerHTML = message;

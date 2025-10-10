@@ -67,6 +67,13 @@ class Show_Login {
     private Show_Login_Authenticator $authenticator;
 
     /**
+     * Popup handler
+     *
+     * @var Show_Login_Popup
+     */
+    private Show_Login_Popup $popup;
+
+    /**
      * Get singleton instance
      *
      * @param string $plugin_file Main plugin file path.
@@ -100,6 +107,7 @@ class Show_Login {
         require_once $this->plugin_path . 'includes/class-show-login-assets.php';
         require_once $this->plugin_path . 'includes/class-show-login-rate-limiter.php';
         require_once $this->plugin_path . 'includes/class-show-login-authenticator.php';
+        require_once $this->plugin_path . 'includes/class-show-login-popup.php';
     }
 
     /**
@@ -109,6 +117,7 @@ class Show_Login {
         $this->assets = new Show_Login_Assets(self::VERSION, $this->plugin_url);
         $this->rate_limiter = new Show_Login_Rate_Limiter();
         $this->authenticator = new Show_Login_Authenticator($this->rate_limiter);
+        $this->popup = new Show_Login_Popup($this->plugin_path, $this->assets);
     }
 
     /**
@@ -118,8 +127,10 @@ class Show_Login {
         // Load plugin text domain
         add_action('plugins_loaded', [$this, 'load_textdomain']);
 
-        // Register AJAX handler
+        // Register AJAX handlers
         add_action('wp_ajax_nopriv_show_login_authenticate', [$this->authenticator, 'handle_login_ajax']);
+        add_action('wp_ajax_nopriv_show_login_check_popup', [$this->popup, 'handle_check_popup_ajax']);
+        add_action('wp_ajax_show_login_check_popup', [$this->popup, 'handle_check_popup_ajax']);
 
         // Delay conditional logic until WordPress is fully loaded
         add_action('wp', [$this, 'setup_frontend_hooks']);
@@ -129,10 +140,9 @@ class Show_Login {
      * Setup front-end hooks after WordPress is loaded
      */
     public function setup_frontend_hooks(): void {
-        // Only load on front-end for non-logged-in users with ?sl=true parameter
-        if (!is_admin() && !is_user_logged_in() && $this->should_show_popup()) {
+        // Only load on front-end (cache-compatible: JS checks login status via AJAX)
+        if (!is_admin()) {
             add_action('wp_enqueue_scripts', [$this->assets, 'enqueue_assets']);
-            add_action('wp_footer', [$this, 'render_popup']);
         }
     }
 
@@ -145,28 +155,6 @@ class Show_Login {
             false,
             dirname(plugin_basename($this->plugin_path)) . '/languages'
         );
-    }
-
-    /**
-     * Check if popup should be shown based on URL parameter
-     *
-     * @return bool
-     */
-    private function should_show_popup(): bool {
-        // Check for ?sl=true or &sl=true in the URL
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only operation
-        return isset($_GET['sl']) && sanitize_text_field(wp_unslash($_GET['sl'])) === 'true';
-    }
-
-    /**
-     * Render popup template in footer
-     */
-    public function render_popup(): void {
-        $template_path = $this->plugin_path . 'templates/popup.php';
-
-        if (file_exists($template_path)) {
-            include $template_path;
-        }
     }
 
     /**

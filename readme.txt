@@ -18,7 +18,9 @@ Show Login adds a beautiful, accessible login popup to your WordPress site that 
 
 * **Lightweight & Fast** - Clean, organized code structure with minimal footprint
 * **Pure JavaScript** - No jQuery or other libraries needed
+* **Cache Compatible** - Works perfectly with all page caching solutions
 * **Seamless Experience** - Users log in without leaving the page
+* **Instant Feedback** - Loading spinner appears immediately, smooth transitions
 * **Secure by Default** - Built-in rate limiting and security features
 * **Fully Accessible** - WCAG compliant with proper ARIA attributes
 * **Translation Ready** - Supports internationalization
@@ -33,7 +35,7 @@ Simply add `?sl=true` to any URL on your site:
 * `https://yoursite.com/shop?sl=true`
 * `https://yoursite.com/post?id=123&sl=true`
 
-When a logged-out user visits the URL, they'll see a clean login popup. After logging in, they stay on the same page - no redirects to wp-login.php needed!
+When a user visits the URL, they'll see an instant loading popup that checks their login status. Logged-out users see the login form, while logged-in users see a friendly message before the popup closes. After logging in, users stay on the same page - no redirects to wp-login.php needed!
 
 = Perfect For =
 
@@ -46,10 +48,12 @@ When a logged-out user visits the URL, they'll see a clean login popup. After lo
 
 = Security Features =
 
-* **Rate Limiting** - Prevents brute-force attacks (5 attempts per 15 minutes by default)
+* **Rate Limiting** - Prevents brute-force attacks (5 attempts per 1 minute by default)
 * **Nonce Verification** - All requests are validated
 * **Proper Sanitization** - All inputs are cleaned and validated
 * **WordPress Authentication** - Uses core WordPress login functions
+* **Cache Compatible** - Login status checked via AJAX, never cached
+* **Username Enumeration Protection** - Generic error messages prevent user discovery
 
 = Developer Features =
 
@@ -102,6 +106,10 @@ If the URL already has parameters, use `&sl=true`:
 = What happens after a user logs in? =
 
 The page reloads with the user logged in. All URL parameters are preserved except the `sl=true` parameter is removed. The user stays on the same page they were viewing.
+
+= Does this work with page caching? =
+
+Yes! The plugin is fully compatible with all page caching solutions (WP Rocket, W3 Total Cache, Cloudflare, etc.). It checks login status via AJAX, which always executes fresh PHP with the user's cookies, bypassing the page cache completely.
 
 = How do I customize the popup text? =
 
@@ -268,7 +276,10 @@ Initial release of Show Login. Enjoy seamless front-end login popups!
 * Initial release
 * Front-end login popup triggered by URL parameter
 * Pure JavaScript implementation with no dependencies
+* Full page caching compatibility (WP Rocket, W3 Total Cache, etc.)
+* Instant loading spinner with smooth transitions
 * Built-in rate limiting and security features
+* Username enumeration prevention
 * Full WordPress authentication integration
 * Extensive hooks and filters for developers
 * Complete translation support

@@ -6,7 +6,9 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 
 - **Lightweight** - Minimal footprint with clean, organized code structure
 - **Pure JavaScript** - No jQuery or other libraries required
+- **Cache Compatible** - Works perfectly with all page caching solutions
 - **Secure** - Rate limiting, nonce verification, and proper sanitization
+- **Fast UX** - Instant loading spinner with smooth transitions
 - **Accessible** - WCAG compliant with proper ARIA attributes
 - **Extensible** - Multiple hooks for two-factor authentication and customization
 - **Translation Ready** - Fully internationalized with i18n support
@@ -43,15 +45,18 @@ When a user successfully logs in:
 ### User Experience
 
 1. User visits a page with `?sl=true` parameter
-2. Popup appears centered on screen with overlay
-3. User can close popup via:
+2. Popup appears **instantly** with loading spinner ("Checking login status...")
+3. Login status checked via AJAX (bypasses page cache)
+4. **If logged out:** Shows "You're not logged in" (1 second) → Login form appears
+5. **If logged in:** Shows "You're already logged in!" (1 second) → Popup closes
+6. User can close popup via:
    - X button in top-right corner
    - Clicking outside popup on overlay
    - Pressing ESC key
-4. User enters credentials and submits
-5. AJAX authentication happens without page reload
-6. Errors display in popup without disruption
-7. On success, page reloads and user is logged in
+7. User enters credentials and submits
+8. AJAX authentication happens without page reload
+9. Errors display in popup without disruption
+10. On success, page reloads and user is logged in
 
 ## Security Features
 
@@ -95,6 +100,18 @@ Error messages are sanitized to prevent username enumeration attacks:
 - Invalid username/email and incorrect password both return: "Invalid username or password"
 - Specific error codes (`invalid_username`, `invalid_email`, `incorrect_password`) are replaced with generic messages
 - Prevents attackers from determining which usernames exist on the site
+
+### Page Caching Compatibility
+
+The plugin is fully compatible with all page caching solutions:
+- JavaScript checks `?sl=true` parameter client-side before any AJAX calls
+- Login status checked via AJAX (always executes fresh PHP with user cookies)
+- No cached nonces or redirect URLs
+- Works with WP Rocket, W3 Total Cache, Cloudflare, and all other caching plugins
+- Instant loading spinner with status messages provides clear feedback:
+  - "Checking login status..." (during AJAX)
+  - "You're not logged in" (if logged out, shows 1 second before form)
+  - "You're already logged in!" (if logged in, shows 1 second before closing)
 
 ## Developer Documentation
 
@@ -321,10 +338,11 @@ show-login/
 │   ├── class-show-login.php                # Main controller
 │   ├── class-show-login-assets.php         # Asset management
 │   ├── class-show-login-authenticator.php  # Authentication handler
+│   ├── class-show-login-popup.php          # Popup rendering & AJAX check
 │   └── class-show-login-rate-limiter.php   # Rate limiting logic
 ├── assets/
 │   ├── css/
-│   │   └── show-login.css                  # Popup styles
+│   │   └── show-login.css                  # Popup styles + loading spinner
 │   └── js/
 │       └── show-login.js                   # Front-end behavior
 ├── templates/
@@ -361,6 +379,12 @@ The plugin follows a clean architecture pattern with separation of concerns:
 - Configurable thresholds and windows
 - CDN/proxy header support
 
+**Popup Handler (`Show_Login_Popup`)**
+- AJAX endpoint for login status check (cache-compatible)
+- HTML rendering from template
+- Returns popup data: HTML, nonce, redirect URL
+- Instant feedback for logged-in users
+
 **Template (`templates/popup.php`)**
 - Semantic HTML markup
 - WCAG accessibility compliant
@@ -372,25 +396,32 @@ The plugin follows a clean architecture pattern with separation of concerns:
 ```
 1. User visits page with ?sl=true
    ↓
-2. Plugin checks: !is_admin() && !is_user_logged_in() && should_show_popup()
+2. Page loads (may be cached HTML)
    ↓
-3. Assets enqueued (CSS, JS, localized data)
+3. Assets enqueued (CSS, JS on all frontend pages)
    ↓
-4. HTML rendered in footer
+4. JavaScript: Check if ?sl=true in URL
    ↓
-5. JavaScript shows popup on DOMContentLoaded
+5. If YES: Show loading spinner immediately
    ↓
-6. User submits form → AJAX request
+6. AJAX: Check login status (show_login_check_popup)
    ↓
-7. PHP: Rate limit check → Nonce verification → Sanitization
+7. PHP: is_user_logged_in() → Return show=true/false + HTML/nonce/redirectUrl
    ↓
-8. Before hooks fire → wp_signon() → After hooks fire
+8. JavaScript: If logged in → Show "You're already logged in!" (1s) → Close
+             If logged out → Show "You're not logged in" (1s) → Show form
    ↓
-9. Success: Clear rate limit → Return success JSON
-   Failure: Log attempt → Return error JSON
+9. User submits form → AJAX request (show_login_authenticate)
    ↓
-10. JavaScript: Success → window.location.href = redirectUrl
-              Failure → Show error in popup
+10. PHP: Rate limit check → Nonce verification → Sanitization
+   ↓
+11. Before hooks fire → wp_signon() → After hooks fire
+   ↓
+12. Success: Clear rate limit → Return success JSON
+    Failure: Log attempt → Return error JSON
+   ↓
+13. JavaScript: Success → window.location.href = redirectUrl
+               Failure → Show error in popup
 ```
 
 ## Best Practices
