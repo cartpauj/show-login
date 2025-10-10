@@ -1,15 +1,16 @@
 # Show Login
 
-A lightweight, single-file WordPress plugin that provides a front-end login popup triggered by URL parameter. Built with modern PHP 7.4+ standards and vanilla JavaScript.
+A lightweight WordPress plugin that provides a front-end login popup triggered by URL parameter. Built with modern PHP 7.4+ standards, vanilla JavaScript, and clean architecture.
 
 ## Features
 
-- **Lightweight** - Single file plugin with no external dependencies
+- **Lightweight** - Minimal footprint with clean, organized code structure
 - **Pure JavaScript** - No jQuery or other libraries required
 - **Secure** - Rate limiting, nonce verification, and proper sanitization
 - **Accessible** - WCAG compliant with proper ARIA attributes
 - **Extensible** - Multiple hooks for two-factor authentication and customization
 - **Translation Ready** - Fully internationalized with i18n support
+- **Well Architected** - Proper MVC separation with dedicated classes for each concern
 
 ## Requirements
 
@@ -18,8 +19,8 @@ A lightweight, single-file WordPress plugin that provides a front-end login popu
 
 ## Installation
 
-1. Download `show-login.php`
-2. Upload to `/wp-content/plugins/show-login/`
+1. Download the plugin files
+2. Upload the `show-login` directory to `/wp-content/plugins/`
 3. Activate the plugin through the WordPress admin
 4. The plugin works automatically when the URL parameter is present
 
@@ -315,29 +316,56 @@ showLoginData.redirectUrl  // URL to redirect after login
 
 ```
 show-login/
-├── show-login.php    # Main plugin file (single file)
-├── README.md         # Technical documentation
-└── readme.txt        # WordPress.org readme
+├── show-login.php                          # Main plugin bootstrap
+├── includes/
+│   ├── class-show-login.php                # Main controller
+│   ├── class-show-login-assets.php         # Asset management
+│   ├── class-show-login-authenticator.php  # Authentication handler
+│   └── class-show-login-rate-limiter.php   # Rate limiting logic
+├── assets/
+│   ├── css/
+│   │   └── show-login.css                  # Popup styles
+│   └── js/
+│       └── show-login.js                   # Front-end behavior
+├── templates/
+│   └── popup.php                           # Login popup HTML
+├── README.md                               # Technical documentation
+└── readme.txt                              # WordPress.org readme
 ```
 
-### Class Structure
+### Architecture
 
-```
-Show_Login (Singleton)
-├── get_instance()          # Get singleton instance
-├── load_textdomain()       # Load translations
-├── should_show_popup()     # Check if popup should display
-├── enqueue_assets()        # Enqueue CSS/JS
-├── get_redirect_url()      # Build redirect URL
-├── get_inline_css()        # Generate CSS
-├── get_inline_js()         # Generate JavaScript
-├── render_popup_html()     # Output HTML
-├── handle_login_ajax()     # Process login via AJAX
-├── is_rate_limited()       # Check rate limit
-├── log_failed_attempt()    # Log failed login
-├── clear_failed_attempts() # Clear attempts on success
-└── get_client_ip()         # Detect client IP
-```
+The plugin follows a clean architecture pattern with separation of concerns:
+
+**Main Controller (`Show_Login`)**
+- Coordinates all plugin components
+- Initializes dependencies
+- Manages WordPress hooks
+- Singleton pattern for single instance
+
+**Assets Handler (`Show_Login_Assets`)**
+- Enqueues CSS and JavaScript files
+- Generates dynamic button color styles
+- Manages script localization
+- Handles redirect URL generation
+
+**Authenticator (`Show_Login_Authenticator`)**
+- Processes AJAX login requests
+- Validates credentials
+- Handles authentication success/failure
+- Sanitizes error messages to prevent username enumeration
+
+**Rate Limiter (`Show_Login_Rate_Limiter`)**
+- IP-based rate limiting
+- Transient storage for attempt tracking
+- Configurable thresholds and windows
+- CDN/proxy header support
+
+**Template (`templates/popup.php`)**
+- Semantic HTML markup
+- WCAG accessibility compliant
+- Action hooks for extensibility
+- Filter hooks for customization
 
 ### Authentication Flow
 

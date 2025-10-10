@@ -1,0 +1,175 @@
+/**
+ * Show Login Popup Styles
+ *
+ * Note: Button colors (background, hover, text) are dynamically generated
+ * via PHP filters and added as inline styles.
+ */
+
+/* Overlay */
+#show-login-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 999999;
+    justify-content: center;
+    align-items: center;
+}
+
+#show-login-overlay.show-login-active {
+    display: flex;
+}
+
+/* Popup Container */
+#show-login-popup {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+/* Close Button */
+#show-login-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#show-login-close:hover {
+    color: #000;
+}
+
+/* Title */
+#show-login-popup h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    color: #333;
+}
+
+/* Form Fields */
+.show-login-field {
+    margin-bottom: 15px;
+}
+
+.show-login-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.show-login-field input[type="text"],
+.show-login-field input[type="email"],
+.show-login-field input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+.show-login-field input:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+/* Error Message */
+#show-login-error {
+    display: none;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+#show-login-error.show-login-visible {
+    display: block;
+}
+
+/* Remember Me */
+.show-login-remember {
+    margin: 15px 0;
+}
+
+.show-login-remember label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.show-login-remember input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Submit Button */
+.show-login-submit-wrapper {
+    margin-top: 20px;
+}
+
+#show-login-submit {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#show-login-submit:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+#show-login-submit.show-login-loading {
+    position: relative;
+    color: transparent;
+}
+
+#show-login-submit.show-login-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: show-login-spin 0.6s linear infinite;
+}
+
+@keyframes show-login-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

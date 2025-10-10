@@ -16,13 +16,14 @@ Show Login adds a beautiful, accessible login popup to your WordPress site that 
 
 = Key Features =
 
-* **Lightweight & Fast** - Single file plugin with no external dependencies
+* **Lightweight & Fast** - Clean, organized code structure with minimal footprint
 * **Pure JavaScript** - No jQuery or other libraries needed
 * **Seamless Experience** - Users log in without leaving the page
 * **Secure by Default** - Built-in rate limiting and security features
 * **Fully Accessible** - WCAG compliant with proper ARIA attributes
 * **Translation Ready** - Supports internationalization
 * **Developer Friendly** - Extensive hooks for customization
+* **Well Architected** - Proper separation of concerns with dedicated classes
 
 = How It Works =
 
