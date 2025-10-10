@@ -57,10 +57,11 @@ When a user successfully logs in:
 ### Rate Limiting
 
 Built-in IP-based rate limiting prevents brute-force attacks:
-- Default: 5 attempts per 15 minutes
+- Default: 5 attempts per 1 minute
 - Uses WordPress transients for storage
 - Clears on successful login
 - Supports proxy/CDN headers (Cloudflare, X-Forwarded-For, etc.)
+- Shows dynamic countdown in error message
 
 Customize via filters:
 
@@ -72,7 +73,7 @@ add_filter('show_login_max_attempts', function($max) {
 
 // Change time window (in seconds)
 add_filter('show_login_rate_limit_window', function($window) {
-    return 3600; // 1 hour window
+    return 3600; // 1 hour window (default: 60 = 1 minute)
 });
 ```
 
@@ -87,6 +88,13 @@ All AJAX requests are protected with WordPress nonces using `check_ajax_referer(
 - Remember: `sanitize_text_field()` + boolean check
 - URLs: `esc_url_raw()` to preserve structure
 
+### Username Enumeration Prevention
+
+Error messages are sanitized to prevent username enumeration attacks:
+- Invalid username/email and incorrect password both return: "Invalid username or password"
+- Specific error codes (`invalid_username`, `invalid_email`, `incorrect_password`) are replaced with generic messages
+- Prevents attackers from determining which usernames exist on the site
+
 ## Developer Documentation
 
 ### Hooks & Filters
@@ -95,6 +103,13 @@ All AJAX requests are protected with WordPress nonces using `check_ajax_referer(
 
 **Form Hooks:**
 ```php
+// Add logo/branding after the title
+add_action('show_login_after_title', function() {
+    echo '<div style="text-align: center; margin: 15px 0;">';
+    echo '<img src="' . esc_url(get_stylesheet_directory_uri() . '/images/logo.png') . '" alt="Logo" style="max-width: 200px;">';
+    echo '</div>';
+});
+
 // Add custom fields at the start of the form
 add_action('show_login_form_start', function() {
     echo '<input type="hidden" name="custom_field" value="data">';
@@ -186,16 +201,40 @@ add_filter('show_login_redirect_url', function($redirect_url, $current_url) {
 }, 10, 2);
 ```
 
+**Button Styling:**
+```php
+// Change button background color
+add_filter('show_login_button_bg_color', function($color) {
+    return '#e74c3c'; // Default: #0073aa
+});
+
+// Change button hover background color
+add_filter('show_login_button_hover_bg_color', function($color) {
+    return '#c0392b'; // Default: #005a87
+});
+
+// Change button text color
+add_filter('show_login_button_text_color', function($color) {
+    return '#ffffff'; // Default: #fff
+});
+```
+
 **Rate Limiting:**
 ```php
+// Disable rate limiting completely
+add_filter('show_login_enable_rate_limiting', '__return_false');
+
+// Change max attempts
 add_filter('show_login_max_attempts', function($max) {
     return 10; // Default: 5
 });
 
+// Change time window (in seconds)
 add_filter('show_login_rate_limit_window', function($window) {
-    return 1800; // 30 minutes (default: 900 = 15 minutes)
+    return 1800; // 30 minutes (default: 60 = 1 minute)
 });
 
+// Override IP detection
 add_filter('show_login_client_ip', function($ip) {
     // Use custom IP detection
     return $_SERVER['CUSTOM_IP_HEADER'] ?? $ip;
@@ -239,7 +278,7 @@ add_action('show_login_after_authenticate', function($user, $credentials) {
 
 ### Customizing Styles
 
-The plugin uses inline CSS for lightweight delivery. To customize styles, use CSS specificity:
+The plugin provides filters for button colors (see **Button Styling** section above). For other style customizations, use CSS specificity:
 
 ```css
 /* Change popup width */
@@ -247,18 +286,15 @@ The plugin uses inline CSS for lightweight delivery. To customize styles, use CS
     max-width: 500px !important;
 }
 
-/* Change button color */
-#show-login-submit {
-    background: #e74c3c !important;
-}
-
-#show-login-submit:hover {
-    background: #c0392b !important;
-}
-
 /* Change overlay opacity */
 #show-login-overlay {
     background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Change input border color on focus */
+.show-login-field input:focus {
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 1px #e74c3c !important;
 }
 ```
 

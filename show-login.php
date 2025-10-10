@@ -58,14 +58,22 @@ class Show_Login {
         // Load plugin text domain for translations
         add_action('plugins_loaded', [$this, 'load_textdomain']);
 
+        // Register AJAX handlers (must be registered early)
+        add_action('wp_ajax_nopriv_show_login_authenticate', [$this, 'handle_login_ajax']);
+
+        // Delay conditional logic until WordPress is fully loaded
+        add_action('wp', [$this, 'setup_frontend_hooks']);
+    }
+
+    /**
+     * Setup front-end hooks after WordPress is loaded
+     */
+    public function setup_frontend_hooks(): void {
         // Only load on front-end for non-logged-in users with ?sl=true parameter
         if (!is_admin() && !is_user_logged_in() && $this->should_show_popup()) {
             add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
             add_action('wp_footer', [$this, 'render_popup_html']);
         }
-
-        // Register AJAX handlers (works for both logged-in and logged-out users)
-        add_action('wp_ajax_nopriv_show_login_authenticate', [$this, 'handle_login_ajax']);
     }
 
     /**
@@ -146,6 +154,32 @@ class Show_Login {
      * @return string
      */
     private function get_inline_css(): string {
+        /**
+         * Filter the submit button background color.
+         *
+         * @param string $color The background color (default: #0073aa).
+         */
+        $button_bg = apply_filters('show_login_button_bg_color', '#0073aa');
+
+        /**
+         * Filter the submit button hover background color.
+         *
+         * @param string $color The hover background color (default: #005a87).
+         */
+        $button_hover_bg = apply_filters('show_login_button_hover_bg_color', '#005a87');
+
+        /**
+         * Filter the submit button text color.
+         *
+         * @param string $color The text color (default: #fff).
+         */
+        $button_text_color = apply_filters('show_login_button_text_color', '#fff');
+
+        // Sanitize color values
+        $button_bg = sanitize_hex_color($button_bg);
+        $button_hover_bg = sanitize_hex_color($button_hover_bg);
+        $button_text_color = sanitize_hex_color($button_text_color);
+
         return <<<CSS
         /* Show Login Popup Styles */
         #show-login-overlay {
@@ -255,8 +289,8 @@ class Show_Login {
         #show-login-submit {
             width: 100%;
             padding: 12px;
-            background: #0073aa;
-            color: #fff;
+            background: {$button_bg};
+            color: {$button_text_color};
             border: none;
             border-radius: 4px;
             font-size: 16px;
@@ -266,7 +300,7 @@ class Show_Login {
         }
 
         #show-login-submit:hover {
-            background: #005a87;
+            background: {$button_hover_bg};
         }
 
         #show-login-submit:disabled {
@@ -386,7 +420,7 @@ CSS;
 
                 // Clear previous errors
                 errorDiv.classList.remove('show-login-visible');
-                errorDiv.textContent = '';
+                errorDiv.innerHTML = '';
 
                 // Validation
                 if (!username || !password) {
@@ -433,7 +467,7 @@ CSS;
 
             function showError(message) {
                 const errorDiv = document.getElementById('show-login-error');
-                errorDiv.textContent = message;
+                errorDiv.innerHTML = message;
                 errorDiv.classList.add('show-login-visible');
             }
         })();
@@ -449,6 +483,14 @@ JS;
             <div id="show-login-popup">
                 <button id="show-login-close" type="button" aria-label="Close">&times;</button>
                 <h2><?php echo esc_html(apply_filters('show_login_popup_title', __('Log In', 'show-login'))); ?></h2>
+
+                <?php
+                /**
+                 * Fires after the popup title, before the error div.
+                 * Perfect location for adding a logo or branding.
+                 */
+                do_action('show_login_after_title');
+                ?>
 
                 <div id="show-login-error" role="alert"></div>
 
@@ -532,11 +574,35 @@ JS;
      * Handle AJAX login request
      */
     public function handle_login_ajax(): void {
-        // Check rate limiting before processing
-        if ($this->is_rate_limited()) {
-            wp_send_json_error([
-                'message' => __('Too many login attempts. Please try again later.', 'show-login')
-            ], 429);
+        /**
+         * Filter to enable/disable rate limiting.
+         *
+         * @param bool $enabled Whether rate limiting is enabled (default: true).
+         */
+        $rate_limiting_enabled = apply_filters('show_login_enable_rate_limiting', true);
+
+        // Check rate limiting before processing (if enabled)
+        if ($rate_limiting_enabled) {
+            $rate_limit_info = $this->is_rate_limited();
+            if ($rate_limit_info['is_limited']) {
+                $time_remaining = $rate_limit_info['time_remaining'];
+                $minutes = ceil($time_remaining / 60);
+
+                /* translators: %s: number of minutes */
+                $message = sprintf(
+                    _n(
+                        'Too many login attempts. Please try again in %s minute.',
+                        'Too many login attempts. Please try again in %s minutes.',
+                        $minutes,
+                        'show-login'
+                    ),
+                    number_format_i18n($minutes)
+                );
+
+                wp_send_json_error([
+                    'message' => $message
+                ], 429);
+            }
         }
 
         // Verify nonce using WordPress standard function
@@ -594,15 +660,18 @@ JS;
             // Log failed attempt for rate limiting
             $this->log_failed_attempt();
 
+            // Sanitize error message to prevent username enumeration
+            $error_message = $this->sanitize_login_error($user);
+
             /**
              * Filter error message before sending to client.
              *
-             * @param string   $message The error message.
+             * @param string   $message The sanitized error message.
              * @param WP_Error $user    The error object.
              */
             $error_message = apply_filters(
                 'show_login_error_message',
-                $user->get_error_message(),
+                $error_message,
                 $user
             );
 
@@ -630,13 +699,48 @@ JS;
     }
 
     /**
+     * Sanitize login error messages to prevent username enumeration
+     *
+     * @param WP_Error $error The error object from authentication.
+     * @return string Generic error message.
+     */
+    private function sanitize_login_error(WP_Error $error): string {
+        $error_code = $error->get_error_code();
+
+        // Map specific error codes to generic messages
+        $generic_errors = [
+            'invalid_username',
+            'invalid_email',
+            'incorrect_password',
+            'invalidcombo',
+        ];
+
+        // If it's a username enumeration vulnerability, return generic message
+        if (in_array($error_code, $generic_errors, true)) {
+            return __('<strong>Error:</strong> Invalid username or password.', 'show-login');
+        }
+
+        // For other errors (like too_many_retries, etc), return the actual message
+        // but strip out any username/email references
+        $message = $error->get_error_message();
+
+        // Remove specific username/email mentions from error messages
+        $message = preg_replace('/<strong>[^<]+<\/strong>\s*(is not registered|was not found)/i',
+            'the username or email', $message);
+
+        return $message;
+    }
+
+    /**
      * Check if current IP is rate limited
      *
-     * @return bool
+     * @return array Array with 'is_limited' boolean and 'time_remaining' in seconds.
      */
-    private function is_rate_limited(): bool {
+    private function is_rate_limited(): array {
         $ip = $this->get_client_ip();
         $transient_key = 'show_login_attempts_' . md5($ip);
+        $transient_timeout_key = '_transient_timeout_' . $transient_key;
+
         $attempts = get_transient($transient_key);
 
         /**
@@ -646,7 +750,31 @@ JS;
          */
         $max_attempts = apply_filters('show_login_max_attempts', 5);
 
-        return $attempts && (int) $attempts >= $max_attempts;
+        $is_limited = $attempts && (int) $attempts >= $max_attempts;
+
+        // Calculate time remaining if limited
+        $time_remaining = 0;
+        if ($is_limited) {
+            global $wpdb;
+            $timeout = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1",
+                    $transient_timeout_key
+                )
+            );
+
+            if ($timeout) {
+                $time_remaining = (int) $timeout - time();
+                if ($time_remaining < 0) {
+                    $time_remaining = 0;
+                }
+            }
+        }
+
+        return [
+            'is_limited' => $is_limited,
+            'time_remaining' => $time_remaining,
+        ];
     }
 
     /**
@@ -662,9 +790,9 @@ JS;
         /**
          * Filter the rate limit window in seconds.
          *
-         * @param int $window Time window in seconds (default: 900 = 15 minutes).
+         * @param int $window Time window in seconds (default: 60 = 1 minute).
          */
-        $window = apply_filters('show_login_rate_limit_window', 900);
+        $window = apply_filters('show_login_rate_limit_window', 60);
 
         set_transient($transient_key, $attempts, $window);
     }

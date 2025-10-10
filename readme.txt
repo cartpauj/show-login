@@ -120,21 +120,24 @@ Yes! The plugin provides hooks that allow you to add 2FA fields and verification
 
 = How does rate limiting work? =
 
-The plugin limits login attempts to 5 per 15 minutes per IP address by default. This prevents brute-force attacks. Failed attempts are tracked and cleared upon successful login.
+The plugin limits login attempts to 5 per 1 minute per IP address by default. This prevents brute-force attacks. Failed attempts are tracked and cleared upon successful login. The error message shows how long until you can try again.
 
 = Can I change the rate limit settings? =
 
 Yes, developers can use filters to customize rate limiting:
 
 `
+// Disable rate limiting completely
+add_filter('show_login_enable_rate_limiting', '__return_false');
+
 // Allow 10 attempts
 add_filter('show_login_max_attempts', function($max) {
     return 10;
 });
 
-// Change window to 30 minutes
+// Change window to 30 minutes (default is 60 seconds)
 add_filter('show_login_rate_limit_window', function($window) {
-    return 1800; // seconds
+    return 1800; // 30 minutes in seconds
 });
 `
 
@@ -161,15 +164,11 @@ Yes! Show Login uses standard WordPress authentication and provides hooks for ot
 
 = Can I customize the popup design? =
 
-Yes! You can override the plugin's CSS with your own styles:
+Yes! For button colors, use the provided filters (see customization examples below). For other styles, you can override the plugin's CSS:
 
 `
 #show-login-popup {
     max-width: 500px !important;
-}
-
-#show-login-submit {
-    background: #your-color !important;
 }
 `
 
@@ -204,6 +203,16 @@ add_filter('show_login_submit_label', function($label) {
 });
 `
 
+= Add a logo or branding =
+
+`
+add_action('show_login_after_title', function() {
+    echo '<div style="text-align: center; margin: 15px 0;">';
+    echo '<img src="' . esc_url(get_stylesheet_directory_uri() . '/images/logo.png') . '" alt="Logo" style="max-width: 200px;">';
+    echo '</div>';
+});
+`
+
 = Add a "Forgot Password" link =
 
 `
@@ -231,6 +240,22 @@ add_action('show_login_success', function($user) {
 });
 `
 
+= Change button colors =
+
+`
+add_filter('show_login_button_bg_color', function($color) {
+    return '#e74c3c'; // Red background
+});
+
+add_filter('show_login_button_hover_bg_color', function($color) {
+    return '#c0392b'; // Darker red on hover
+});
+
+add_filter('show_login_button_text_color', function($color) {
+    return '#ffffff'; // White text
+});
+`
+
 == Upgrade Notice ==
 
 = 1.0.0 =
@@ -255,6 +280,7 @@ Show Login provides extensive hooks for customization and integration.
 
 = Action Hooks =
 
+* `show_login_after_title` - Fires after the popup title (perfect for logos/branding)
 * `show_login_form_start` - Fires at the beginning of the form
 * `show_login_form_middle` - Fires before the submit button (perfect for 2FA fields)
 * `show_login_form_end` - Fires at the end of the form
@@ -269,9 +295,13 @@ Show Login provides extensive hooks for customization and integration.
 * `show_login_password_label` - Customize password field label
 * `show_login_remember_label` - Customize remember me label
 * `show_login_submit_label` - Customize submit button text
+* `show_login_button_bg_color` - Customize button background color
+* `show_login_button_hover_bg_color` - Customize button hover background color
+* `show_login_button_text_color` - Customize button text color
 * `show_login_credentials` - Modify credentials before authentication
 * `show_login_error_message` - Customize error messages
 * `show_login_redirect_url` - Modify redirect destination
+* `show_login_enable_rate_limiting` - Enable or disable rate limiting
 * `show_login_max_attempts` - Adjust rate limit threshold
 * `show_login_rate_limit_window` - Adjust rate limit window
 * `show_login_client_ip` - Override IP detection
