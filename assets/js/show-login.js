@@ -24,10 +24,8 @@
             return;
         }
 
-        // Show loading popup immediately (better UX while AJAX runs)
-        showLoadingPopup();
-
         // Check if we should show popup (handles caching + login status)
+        // Note: Loading spinner may or may not show based on server-side filter
         checkAndShowPopup();
     });
 
@@ -52,6 +50,9 @@
      * Check via AJAX if popup should be shown and display it
      */
     function checkAndShowPopup() {
+        // Track if we showed loading state
+        let loadingShown = false;
+
         // Make AJAX request to check login status
         fetch(showLoginData.ajaxUrl, {
             method: 'POST',
@@ -64,16 +65,35 @@
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data.show) {
-                // User is logged out - replace loading with actual form
-                replaceLoadingWithForm(data.data.html, data.data.nonce, data.data.redirectUrl);
+                // User is logged out - show form (with or without loading messages)
+                if (data.data.suppressLoading) {
+                    // Skip loading messages, show form immediately
+                    showFormImmediately(data.data.html, data.data.nonce, data.data.redirectUrl);
+                } else {
+                    // Show loading popup first, then show messages
+                    if (!loadingShown) {
+                        showLoadingPopup();
+                        loadingShown = true;
+                    }
+                    // Show loading messages before form
+                    replaceLoadingWithForm(data.data.html, data.data.nonce, data.data.redirectUrl);
+                }
             } else {
-                // User is already logged in - show success message then close
-                showLoggedInMessage();
+                // User is already logged in
+                if (!data.data.suppressLoading) {
+                    // Show loading popup, then success message
+                    if (!loadingShown) {
+                        showLoadingPopup();
+                        loadingShown = true;
+                    }
+                    showLoggedInMessage();
+                }
+                // Otherwise suppress is enabled, nothing to show
             }
         })
         .catch(error => {
             console.error('Show Login: Failed to check popup status', error);
-            // On error, close the loading popup
+            // On error, close the loading popup if it exists
             closePopup();
         });
     }
@@ -94,6 +114,33 @@
         setTimeout(function() {
             closePopup();
         }, 1000);
+    }
+
+    /**
+     * Show form immediately without loading messages
+     */
+    function showFormImmediately(html, nonce, redirectUrl) {
+        // Remove loading popup if it exists
+        const overlay = document.getElementById('show-login-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+
+        // Inject actual popup HTML
+        document.body.insertAdjacentHTML('beforeend', html);
+
+        // Update nonce and redirect URL
+        showLoginData.nonce = nonce;
+        showLoginData.redirectUrl = redirectUrl;
+
+        // Initialize popup behavior
+        initializePopup();
+
+        // Show the popup
+        const newOverlay = document.getElementById('show-login-overlay');
+        if (newOverlay) {
+            newOverlay.classList.add('show-login-active');
+        }
     }
 
     /**

@@ -106,7 +106,8 @@ Error messages are sanitized to prevent username enumeration attacks:
 The plugin is fully compatible with all page caching solutions:
 - JavaScript checks `?sl=true` parameter client-side before any AJAX calls
 - Login status checked via AJAX (always executes fresh PHP with user cookies)
-- No cached nonces or redirect URLs
+- **Nonces generated fresh per user** - Created dynamically via AJAX, never cached
+- **Redirect URLs computed per request** - Always accurate, never stale
 - Works with WP Rocket, W3 Total Cache, Cloudflare, and all other caching plugins
 - Instant loading spinner with status messages provides clear feedback:
   - "Checking login status..." (during AJAX)
@@ -235,6 +236,13 @@ add_filter('show_login_button_hover_bg_color', function($color) {
 add_filter('show_login_button_text_color', function($color) {
     return '#ffffff'; // Default: #fff
 });
+```
+
+**Loading State:**
+```php
+// Suppress loading spinner and status messages
+// Popup stays hidden until AJAX confirms user is logged out
+add_filter('show_login_suppress_loading_state', '__return_true');
 ```
 
 **Rate Limiting:**

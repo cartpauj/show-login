@@ -47,14 +47,26 @@ class Show_Login_Popup {
      * Cache-compatible: Always executes fresh PHP with user's cookies
      */
     public function handle_check_popup_ajax(): void {
-        // Ensure users can see the status message (prevents flash if AJAX is too fast)
-        sleep(1);
+        /**
+         * Filter to suppress loading spinner and status messages.
+         * If true, popup stays hidden until AJAX confirms user is logged out.
+         *
+         * @since 1.0.0
+         * @param bool $suppress Whether to suppress loading state (default: false).
+         */
+        $suppress_loading = apply_filters('show_login_suppress_loading_state', false);
+
+        // Only add delay if loading state is being shown (prevents flash if AJAX is too fast)
+        if (!$suppress_loading) {
+            sleep(1);
+        }
 
         // Check if user is already logged in
         if (is_user_logged_in()) {
             wp_send_json_success([
                 'show' => false,
-                'reason' => 'already_logged_in'
+                'reason' => 'already_logged_in',
+                'suppressLoading' => $suppress_loading
             ]);
         }
 
@@ -63,7 +75,8 @@ class Show_Login_Popup {
             'show' => true,
             'html' => $this->get_popup_html(),
             'nonce' => wp_create_nonce('show_login_nonce'),
-            'redirectUrl' => $this->assets->get_redirect_url()
+            'redirectUrl' => $this->assets->get_redirect_url(),
+            'suppressLoading' => $suppress_loading
         ]);
     }
 

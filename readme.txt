@@ -109,7 +109,7 @@ The page reloads with the user logged in. All URL parameters are preserved excep
 
 = Does this work with page caching? =
 
-Yes! The plugin is fully compatible with all page caching solutions (WP Rocket, W3 Total Cache, Cloudflare, etc.). It checks login status via AJAX, which always executes fresh PHP with the user's cookies, bypassing the page cache completely.
+Yes! The plugin is fully compatible with all page caching solutions (WP Rocket, W3 Total Cache, Cloudflare, etc.). It checks login status via AJAX, which always executes fresh PHP with the user's cookies, bypassing the page cache completely. Security nonces are also generated fresh per user via AJAX and never cached, ensuring maximum security even with aggressive caching.
 
 = How do I customize the popup text? =
 
@@ -313,6 +313,7 @@ Show Login provides extensive hooks for customization and integration.
 * `show_login_credentials` - Modify credentials before authentication
 * `show_login_error_message` - Customize error messages
 * `show_login_redirect_url` - Modify redirect destination
+* `show_login_suppress_loading_state` - Suppress loading spinner and status messages
 * `show_login_enable_rate_limiting` - Enable or disable rate limiting
 * `show_login_max_attempts` - Adjust rate limit threshold
 * `show_login_rate_limit_window` - Adjust rate limit window
