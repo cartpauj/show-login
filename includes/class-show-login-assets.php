@@ -67,10 +67,20 @@ class Show_Login_Assets {
             true
         );
 
-        // Localize script with AJAX URL only
+        /**
+         * Filter to suppress loading spinner and status messages.
+         * If true, popup stays hidden until AJAX confirms user is logged out.
+         *
+         * @since 1.0.0
+         * @param bool $suppress Whether to suppress loading state (default: false).
+         */
+        $suppress_loading = apply_filters('show_login_suppress_loading_state', false);
+
+        // Localize script with AJAX URL and suppress flag
         // Nonce and redirectUrl are fetched dynamically via AJAX (cache-compatible)
         wp_localize_script('show-login', 'showLoginData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
+            'suppressLoading' => $suppress_loading,
         ]);
     }
 

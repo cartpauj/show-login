@@ -50,8 +50,13 @@
      * Check via AJAX if popup should be shown and display it
      */
     function checkAndShowPopup() {
-        // Track if we showed loading state
-        let loadingShown = false;
+        // Check if loading should be suppressed (from localized data)
+        const shouldSuppressLoading = showLoginData.suppressLoading || false;
+
+        // Show loading popup immediately if not suppressed
+        if (!shouldSuppressLoading) {
+            showLoadingPopup();
+        }
 
         // Make AJAX request to check login status
         fetch(showLoginData.ajaxUrl, {
@@ -66,26 +71,16 @@
         .then(data => {
             if (data.success && data.data.show) {
                 // User is logged out - show form (with or without loading messages)
-                if (data.data.suppressLoading) {
+                if (shouldSuppressLoading) {
                     // Skip loading messages, show form immediately
                     showFormImmediately(data.data.html, data.data.nonce, data.data.redirectUrl);
                 } else {
-                    // Show loading popup first, then show messages
-                    if (!loadingShown) {
-                        showLoadingPopup();
-                        loadingShown = true;
-                    }
                     // Show loading messages before form
                     replaceLoadingWithForm(data.data.html, data.data.nonce, data.data.redirectUrl);
                 }
             } else {
                 // User is already logged in
-                if (!data.data.suppressLoading) {
-                    // Show loading popup, then success message
-                    if (!loadingShown) {
-                        showLoadingPopup();
-                        loadingShown = true;
-                    }
+                if (!shouldSuppressLoading) {
                     showLoggedInMessage();
                 }
                 // Otherwise suppress is enabled, nothing to show
@@ -102,6 +97,7 @@
      * Show "You're already logged in!" message before closing
      */
     function showLoggedInMessage() {
+        // Update loading state to success message
         const loadingState = document.querySelector('.show-login-loading-state');
         if (loadingState) {
             loadingState.innerHTML = `
@@ -147,7 +143,7 @@
      * Replace loading state with actual login form
      */
     function replaceLoadingWithForm(html, nonce, redirectUrl) {
-        // First, show "You're not logged in" message
+        // Update to "You're not logged in" message
         const loadingState = document.querySelector('.show-login-loading-state');
         if (loadingState) {
             loadingState.innerHTML = `
