@@ -7,11 +7,12 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 - **Lightweight** - Minimal footprint with clean, organized code structure
 - **Pure JavaScript** - No jQuery or other libraries required
 - **Cache Compatible** - Works perfectly with all page caching solutions (WP Rocket, LiteSpeed, etc.)
-- **Turnstile Integration** - Built-in support for Cloudflare Turnstile CAPTCHA with dynamic script loading
-- **Secure** - Rate limiting, nonce verification, CAPTCHA support, and proper sanitization
+- **Turnstile Integration** - Automatic integration with [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) plugin for CAPTCHA protection
+- **Two-Factor Authentication** - Automatic integration with [Two Factor](https://wordpress.org/plugins/two-factor/) plugin with seamless redirect flow
+- **Secure** - Rate limiting, nonce verification, username enumeration prevention, and proper sanitization
 - **Fast UX** - Instant loading spinner with smooth transitions
 - **Accessible** - WCAG compliant with proper ARIA attributes
-- **Extensible** - Multiple hooks for two-factor authentication, CAPTCHA, and customization
+- **Extensible** - Multiple hooks for custom authentication flows and customization
 - **Translation Ready** - Fully internationalized with i18n support
 - **Well Architected** - Proper MVC separation with dedicated classes for each concern
 - **Multiple URL Triggers** - Supports `?sl=true`, `?sl=1`, `?show_login=true`, and `?show_login=1`
@@ -297,11 +298,11 @@ add_action('show_login_form_start', function() {
     echo '<input type="hidden" name="custom_field" value="data">';
 });
 
-// Add 2FA fields before the submit button
+// Add custom fields before the submit button
 add_action('show_login_form_middle', function() {
     echo '<div class="show-login-field">';
-    echo '<label for="two-factor-code">2FA Code</label>';
-    echo '<input type="text" id="two-factor-code" name="two_factor_code">';
+    echo '<label for="custom-field">Custom Field</label>';
+    echo '<input type="text" id="custom-field" name="custom_field">';
     echo '</div>';
 });
 
@@ -430,36 +431,22 @@ add_filter('show_login_client_ip', function($ip) {
 });
 ```
 
-### Two-Factor Authentication Integration
+### Custom Authentication Flows
 
-Example integration with a 2FA plugin:
+For custom authentication requirements beyond the built-in Two Factor plugin integration, you can use the authentication hooks:
 
 ```php
-// Add 2FA field to form
-add_action('show_login_form_middle', function() {
-    ?>
-    <div class="show-login-field">
-        <label for="show-login-2fa">Two-Factor Code</label>
-        <input type="text" id="show-login-2fa" name="two_factor_code" autocomplete="one-time-code">
-    </div>
-    <?php
-});
-
-// Verify 2FA code after password authentication
+// Example: Custom post-authentication validation
 add_action('show_login_after_authenticate', function($user, $credentials) {
     if (is_wp_error($user)) {
-        return; // Password failed, don't check 2FA
+        return; // Authentication failed, skip custom checks
     }
 
-    // Get 2FA code from POST
-    $two_factor_code = isset($_POST['two_factor_code']) ?
-        sanitize_text_field(wp_unslash($_POST['two_factor_code'])) : '';
-
-    // Verify 2FA code
-    if (!verify_2fa_code($user->ID, $two_factor_code)) {
+    // Example: Require custom condition to be met
+    if (!user_meets_custom_requirement($user->ID)) {
         wp_logout(); // Log them back out
         wp_send_json_error([
-            'message' => 'Invalid two-factor authentication code.'
+            'message' => 'Additional authentication requirements not met.'
         ]);
     }
 }, 10, 2);
@@ -631,8 +618,8 @@ The plugin follows a clean architecture pattern with separation of concerns:
 ### Security Recommendations
 
 1. Always use HTTPS in production
-2. Enable Cloudflare Turnstile for CAPTCHA protection (see Turnstile Integration section)
-3. Enable two-factor authentication via hooks (see Two-Factor Authentication Integration section)
+2. Install [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) for CAPTCHA protection (see Cloudflare Turnstile Integration section)
+3. Install [Two Factor](https://wordpress.org/plugins/two-factor/) plugin for 2FA support (see Two-Factor Authentication Integration section)
 4. Monitor failed login attempts using action hooks
 5. Keep WordPress and plugins updated
 6. Consider lowering rate limit thresholds for high-security sites
