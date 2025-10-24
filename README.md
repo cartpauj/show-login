@@ -6,13 +6,15 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 
 - **Lightweight** - Minimal footprint with clean, organized code structure
 - **Pure JavaScript** - No jQuery or other libraries required
-- **Cache Compatible** - Works perfectly with all page caching solutions
-- **Secure** - Rate limiting, nonce verification, and proper sanitization
+- **Cache Compatible** - Works perfectly with all page caching solutions (WP Rocket, LiteSpeed, etc.)
+- **Turnstile Integration** - Built-in support for Cloudflare Turnstile CAPTCHA with dynamic script loading
+- **Secure** - Rate limiting, nonce verification, CAPTCHA support, and proper sanitization
 - **Fast UX** - Instant loading spinner with smooth transitions
 - **Accessible** - WCAG compliant with proper ARIA attributes
-- **Extensible** - Multiple hooks for two-factor authentication and customization
+- **Extensible** - Multiple hooks for two-factor authentication, CAPTCHA, and customization
 - **Translation Ready** - Fully internationalized with i18n support
 - **Well Architected** - Proper MVC separation with dedicated classes for each concern
+- **Multiple URL Triggers** - Supports `?sl=true`, `?sl=1`, `?show_login=true`, and `?show_login=1`
 
 ## Requirements
 
@@ -30,21 +32,30 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 
 ### Basic Usage
 
-Add `?sl=true` to any URL on your site to trigger the login popup for non-logged-in users:
+Add any of these URL parameters to trigger the login popup for non-logged-in users:
 
 ```
 https://example.com/page?sl=true
+https://example.com/page?sl=1
+https://example.com/page?show_login=true
+https://example.com/page?show_login=1
+```
+
+All four parameter variations work identically. Parameters can be combined with other URL parameters:
+
+```
 https://example.com/shop/product?id=123&sl=true
+https://example.com/members/content?category=premium&show_login=1
 ```
 
 When a user successfully logs in:
 - The page reloads with them logged in
 - All URL parameters are preserved
-- Only the `sl=true` parameter is removed
+- Only the popup trigger parameter is removed (e.g., `sl` or `show_login`)
 
 ### User Experience
 
-1. User visits a page with `?sl=true` parameter
+1. User visits a page with a popup trigger parameter (e.g., `?sl=true`)
 2. Popup appears **instantly** with loading spinner ("Checking login status...")
 3. Login status checked via AJAX (bypasses page cache)
 4. **If logged out:** Shows "You're not logged in" (1 second) → Login form appears
@@ -113,6 +124,106 @@ The plugin is fully compatible with all page caching solutions:
   - "Checking login status..." (during AJAX)
   - "You're not logged in" (if logged out, shows 1 second before form)
   - "You're already logged in!" (if logged in, shows 1 second before closing)
+
+## Cloudflare Turnstile Integration
+
+Show Login includes built-in integration with the [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) plugin for CAPTCHA protection.
+
+### Features
+
+- ✅ **Automatic Detection** - Activates only when Turnstile plugin is installed and configured
+- ✅ **Cache Compatible** - Turnstile scripts load dynamically via JavaScript
+- ✅ **All Settings Supported** - Works with all Turnstile themes, sizes, and appearance modes
+- ✅ **Whitelist Support** - Respects Turnstile's IP/user whitelist settings
+- ✅ **Button Disable Support** - Compatible with "disable submit button" option
+- ✅ **Zero Configuration** - No setup needed beyond installing both plugins
+
+### Setup
+
+1. Install and activate [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/)
+2. Configure your Cloudflare Turnstile **Site Key** and **Secret Key** in **Settings > Turnstile**
+3. **That's it!** The integration works automatically
+
+**Note:** You do NOT need to enable the "Login" checkbox in Turnstile settings - Show Login popup works independently with its own integration.
+
+### Supported Settings
+
+The integration works with **ALL** Turnstile settings:
+
+- ✅ **Appearance Modes**: Always visible, Execute (invisible), or Interaction-only
+- ✅ **Themes**: Light, Dark, or Auto
+- ✅ **Sizes**: Normal, Compact, or Flexible
+- ✅ **Disable Submit Button**: Supported in both visible and invisible modes
+- ✅ **Languages**: All Cloudflare Turnstile languages
+- ✅ **Whitelist**: IP and user whitelisting honored
+- ✅ **Custom Error Messages**: Displayed in popup on validation failure
+
+### How It Works
+
+When both plugins are active and Turnstile is configured:
+
+1. User visits page with popup trigger parameter
+2. Turnstile API loads dynamically (cache-compatible)
+3. Login popup appears with Turnstile widget between "Remember Me" and submit button
+4. User interaction:
+   - **Visible mode**: User completes the visible challenge, then submits
+   - **Invisible mode**: User fills form and clicks submit, verification happens automatically
+5. Turnstile token (`cf-turnstile-response`) sent with login request
+6. Server validates token before authentication via `cfturnstile_check()`
+7. If validation fails, user sees error message (customizable in Turnstile settings)
+8. If validation succeeds, normal authentication proceeds
+
+**Invisible Mode Behavior:**
+- No visible widget shown to user
+- Verification runs automatically when submit button is clicked
+- Seamless UX - users don't see CAPTCHA unless flagged as suspicious
+- All validation happens server-side - no difference in backend flow
+
+### Filters
+
+```php
+// Skip Turnstile validation for specific users/conditions
+add_filter('show_login_skip_turnstile', function($skip) {
+    // Example: Skip for admin users testing
+    if (current_user_can('manage_options')) {
+        return true;
+    }
+    return $skip;
+});
+```
+
+### Action Hooks
+
+```php
+// Track Turnstile failures
+add_action('cfturnstile_show_login_failed', function($username) {
+    error_log("Turnstile validation failed for user: {$username}");
+});
+
+// Track Turnstile successes
+add_action('cfturnstile_show_login_success', function($username) {
+    error_log("Turnstile validation passed for user: {$username}");
+});
+```
+
+### Technical Details
+
+**Cache Compatibility:**
+- Turnstile scripts load dynamically via JavaScript when popup trigger parameter is detected
+- Works with all caching plugins (WP Rocket, LiteSpeed Cache, W3 Total Cache, etc.)
+- No cache variations needed for URL parameters
+
+**Validation:**
+- Server-side validation occurs before `wp_signon()` authentication
+- Uses Turnstile's `cfturnstile_check()` function for validation
+- Validates the `cf-turnstile-response` POST parameter
+- Returns appropriate error messages on failure
+
+**Styling:**
+- Turnstile widget centered in popup
+- Custom CSS classes: `.show-login-turnstile`, `.show-login-cf-turnstile`
+- Respects Turnstile theme settings (light, dark, auto)
+- Proper spacing and layout integration
 
 ## Developer Documentation
 
@@ -347,12 +458,13 @@ show-login/
 │   ├── class-show-login-assets.php         # Asset management
 │   ├── class-show-login-authenticator.php  # Authentication handler
 │   ├── class-show-login-popup.php          # Popup rendering & AJAX check
-│   └── class-show-login-rate-limiter.php   # Rate limiting logic
+│   ├── class-show-login-rate-limiter.php   # Rate limiting logic
+│   └── class-show-login-turnstile.php      # Cloudflare Turnstile integration
 ├── assets/
 │   ├── css/
-│   │   └── show-login.css                  # Popup styles + loading spinner
+│   │   └── show-login.css                  # Popup styles + Turnstile styles
 │   └── js/
-│       └── show-login.js                   # Front-end behavior
+│       └── show-login.js                   # Front-end behavior + Turnstile loader
 ├── templates/
 │   └── popup.php                           # Login popup HTML
 ├── README.md                               # Technical documentation
@@ -399,36 +511,46 @@ The plugin follows a clean architecture pattern with separation of concerns:
 - Action hooks for extensibility
 - Filter hooks for customization
 
+**Turnstile Integration (`Show_Login_Turnstile`)**
+- Automatic detection of Turnstile plugin
+- Dynamic script loading for cache compatibility
+- Server-side validation before authentication
+- Respects whitelist and all Turnstile settings
+
 ### Authentication Flow
 
 ```
-1. User visits page with ?sl=true
+1. User visits page with ?sl=true (or ?sl=1, ?show_login=true, ?show_login=1)
    ↓
 2. Page loads (may be cached HTML)
    ↓
 3. Assets enqueued (CSS, JS on all frontend pages)
    ↓
-4. JavaScript: Check if ?sl=true in URL
+4. JavaScript: Check if popup trigger parameter in URL
    ↓
-5. If YES: Show loading spinner immediately
+5. If YES: Load Turnstile API dynamically (if Turnstile plugin active)
    ↓
-6. AJAX: Check login status (show_login_check_popup)
+6. Show loading spinner immediately
    ↓
-7. PHP: is_user_logged_in() → Return show=true/false + HTML/nonce/redirectUrl
+7. AJAX: Check login status (show_login_check_popup)
    ↓
-8. JavaScript: If logged in → Show "You're already logged in!" (1s) → Close
+8. PHP: is_user_logged_in() → Return show=true/false + HTML/nonce/redirectUrl
+   ↓
+9. JavaScript: If logged in → Show "You're already logged in!" (1s) → Close
              If logged out → Show "You're not logged in" (1s) → Show form
    ↓
-9. User submits form → AJAX request (show_login_authenticate)
+10. Turnstile widget renders (if enabled) → User completes verification
    ↓
-10. PHP: Rate limit check → Nonce verification → Sanitization
+11. User submits form → AJAX request (show_login_authenticate)
    ↓
-11. Before hooks fire → wp_signon() → After hooks fire
+12. PHP: Rate limit check → Nonce verification → Turnstile validation → Sanitization
    ↓
-12. Success: Clear rate limit → Return success JSON
+13. Before hooks fire → wp_signon() → After hooks fire
+   ↓
+14. Success: Clear rate limit → Return success JSON
     Failure: Log attempt → Return error JSON
    ↓
-13. JavaScript: Success → window.location.href = redirectUrl
+15. JavaScript: Success → window.location.href = redirectUrl
                Failure → Show error in popup
 ```
 
@@ -457,19 +579,36 @@ The plugin follows a clean architecture pattern with separation of concerns:
 ### Security Recommendations
 
 1. Always use HTTPS in production
-2. Consider adding CAPTCHA for additional security
-3. Enable two-factor authentication
-4. Monitor failed login attempts
+2. Enable Cloudflare Turnstile for CAPTCHA protection (see Turnstile Integration section)
+3. Enable two-factor authentication via hooks (see Two-Factor Authentication Integration section)
+4. Monitor failed login attempts using action hooks
 5. Keep WordPress and plugins updated
+6. Consider lowering rate limit thresholds for high-security sites
 
 ## Troubleshooting
 
 ### Popup doesn't appear
 
 - Verify user is logged out
-- Check URL has `?sl=true` or `&sl=true`
+- Check URL has one of: `?sl=true`, `?sl=1`, `?show_login=true`, or `?show_login=1`
 - Check JavaScript console for errors
 - Verify plugin is activated
+
+### Turnstile widget not showing
+
+- Verify Simple Cloudflare Turnstile plugin is installed and activated
+- Check that Turnstile keys are configured in **Settings > Turnstile**
+- Check JavaScript console for Turnstile API loading errors
+- Verify user is not whitelisted in Turnstile settings
+- **Note:** If using invisible mode (`appearance: execute`), the widget is intentionally hidden - verification happens automatically on submit
+
+### Turnstile validation always failing
+
+- Verify both Site Key and Secret Key are correct in Turnstile settings
+- Check that keys match the domain (Turnstile keys are domain-specific)
+- Ensure server can make outbound HTTPS requests to `challenges.cloudflare.com`
+- Check for JavaScript errors preventing Turnstile from loading
+- Test with a different browser or incognito mode
 
 ### Redirect not working after login
 
@@ -495,7 +634,10 @@ GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ### 1.0.0
 - Initial release
-- Front-end login popup with URL parameter trigger
+- Front-end login popup with URL parameter triggers (`?sl=true`, `?sl=1`, `?show_login=true`, `?show_login=1`)
+- Built-in Cloudflare Turnstile integration with dynamic script loading
+- Cache-compatible architecture (works with all caching plugins)
 - Rate limiting and security features
-- Extensive hooks for extensibility
+- Extensive hooks for extensibility (2FA, CAPTCHA, custom fields)
 - Full translation support
+- WCAG accessibility compliant

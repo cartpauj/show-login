@@ -142,8 +142,8 @@ class Show_Login_Assets {
             $current_url = esc_url_raw($protocol . $http_host . $request_uri);
         }
 
-        // Remove sl parameter from URL
-        $redirect_url = remove_query_arg('sl', $current_url);
+        // Remove all popup trigger parameters from URL
+        $redirect_url = remove_query_arg(['sl', 'show_login'], $current_url);
 
         /**
          * Filter the redirect URL after successful login.

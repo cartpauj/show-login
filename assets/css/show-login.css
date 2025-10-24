@@ -232,3 +232,23 @@
     font-weight: bold;
     font-style: italic;
 }
+
+/* Cloudflare Turnstile Integration */
+.show-login-turnstile {
+    margin-bottom: 20px;
+}
+
+.show-login-turnstile .cf-turnstile {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.show-login-turnstile .cf-turnstile-br {
+    display: none;
+}
+
+/* Adjust spacing when Turnstile is present */
+.show-login-turnstile + .show-login-submit-wrapper {
+    margin-top: 10px;
+}

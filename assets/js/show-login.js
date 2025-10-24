@@ -8,18 +8,32 @@
     'use strict';
 
     /**
-     * Check if ?sl=true parameter is in the URL
+     * Check if popup trigger parameter is in the URL
+     * Supports: ?sl=true, ?sl=1, ?show_login=true, ?show_login=1
      */
     function shouldCheckPopup() {
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('sl') === 'true';
+
+        // Check 'sl' parameter
+        const sl = urlParams.get('sl');
+        if (sl === 'true' || sl === '1') {
+            return true;
+        }
+
+        // Check 'show_login' parameter
+        const showLogin = urlParams.get('show_login');
+        if (showLogin === 'true' || showLogin === '1') {
+            return true;
+        }
+
+        return false;
     }
 
     /**
      * Initialize popup on page load
      */
     document.addEventListener('DOMContentLoaded', function() {
-        // Exit early if ?sl=true is not in URL (most efficient check)
+        // Exit early if trigger parameter is not in URL (most efficient check)
         if (!shouldCheckPopup()) {
             return;
         }
@@ -47,6 +61,41 @@
     }
 
     /**
+     * Load Turnstile API script dynamically
+     */
+    function loadTurnstileScript(callback) {
+        // Check if Turnstile is already loaded
+        if (typeof window.turnstile !== 'undefined') {
+            callback();
+            return;
+        }
+
+        // Check if script is already being loaded
+        if (document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]')) {
+            // Wait for it to load
+            const checkInterval = setInterval(function() {
+                if (typeof window.turnstile !== 'undefined') {
+                    clearInterval(checkInterval);
+                    callback();
+                }
+            }, 100);
+            return;
+        }
+
+        // Load Turnstile API script
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.setAttribute('data-cfasync', 'false');
+        script.onload = callback;
+        script.onerror = function() {
+            console.error('Show Login: Failed to load Turnstile script');
+            callback(); // Continue anyway
+        };
+        document.head.appendChild(script);
+    }
+
+    /**
      * Check via AJAX if popup should be shown and display it
      */
     function checkAndShowPopup() {
@@ -58,38 +107,41 @@
             showLoadingPopup();
         }
 
-        // Make AJAX request to check login status
-        fetch(showLoginData.ajaxUrl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=show_login_check_popup'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.data.show) {
-                // User is logged out - show form (with or without loading messages)
-                if (shouldSuppressLoading) {
-                    // Skip loading messages, show form immediately
-                    showFormImmediately(data.data.html, data.data.nonce, data.data.redirectUrl);
+        // Load Turnstile script first (if needed), then check popup
+        loadTurnstileScript(function() {
+            // Make AJAX request to check login status
+            fetch(showLoginData.ajaxUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=show_login_check_popup'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data.show) {
+                    // User is logged out - show form (with or without loading messages)
+                    if (shouldSuppressLoading) {
+                        // Skip loading messages, show form immediately
+                        showFormImmediately(data.data.html, data.data.nonce, data.data.redirectUrl);
+                    } else {
+                        // Show loading messages before form
+                        replaceLoadingWithForm(data.data.html, data.data.nonce, data.data.redirectUrl);
+                    }
                 } else {
-                    // Show loading messages before form
-                    replaceLoadingWithForm(data.data.html, data.data.nonce, data.data.redirectUrl);
+                    // User is already logged in
+                    if (!shouldSuppressLoading) {
+                        showLoggedInMessage();
+                    }
+                    // Otherwise suppress is enabled, nothing to show
                 }
-            } else {
-                // User is already logged in
-                if (!shouldSuppressLoading) {
-                    showLoggedInMessage();
-                }
-                // Otherwise suppress is enabled, nothing to show
-            }
-        })
-        .catch(error => {
-            console.error('Show Login: Failed to check popup status', error);
-            // On error, close the loading popup if it exists
-            closePopup();
+            })
+            .catch(error => {
+                console.error('Show Login: Failed to check popup status', error);
+                // On error, close the loading popup if it exists
+                closePopup();
+            });
         });
     }
 
@@ -298,4 +350,17 @@
         errorDiv.innerHTML = message;
         errorDiv.classList.add('show-login-visible');
     }
+
+    /**
+     * Cloudflare Turnstile callback
+     * Called when Turnstile verification completes (if disable button option is enabled)
+     */
+    window.showLoginTurnstileCallback = function() {
+        const submitBtn = document.getElementById('show-login-submit');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.pointerEvents = '';
+            submitBtn.style.opacity = '';
+        }
+    };
 })();
