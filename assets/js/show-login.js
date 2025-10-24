@@ -246,15 +246,6 @@
             });
         }
 
-        // Close on overlay click
-        if (overlay) {
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) {
-                    closePopup();
-                }
-            });
-        }
-
         // Close on ESC key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
