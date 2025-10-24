@@ -3,7 +3,29 @@
  *
  * Note: Button colors (background, hover, text) are dynamically generated
  * via PHP filters and added as inline styles.
+ *
+ * These styles are intentionally opinionated to ensure consistent appearance
+ * across all WordPress themes without affecting the theme's own styles.
  */
+
+/* CSS Reset for popup elements to prevent theme interference */
+#show-login-overlay,
+#show-login-overlay *,
+#show-login-overlay *::before,
+#show-login-overlay *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+    line-height: normal;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    word-spacing: normal;
+}
 
 /* Overlay */
 #show-login-overlay {
@@ -33,6 +55,10 @@
     width: 90%;
     padding: 30px;
     box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
 }
 
 /* Close Button */
@@ -60,93 +86,166 @@
 
 /* Title */
 #show-login-popup h2 {
-    margin: 0 0 20px 0;
-    font-size: 24px;
-    color: #333;
+    margin: 0 0 20px 0 !important;
+    padding: 0 !important;
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    color: #333 !important;
+    border: none !important;
+    background: none !important;
+    text-align: left !important;
+}
+
+/* Form */
+#show-login-form {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
 }
 
 /* Form Fields */
 .show-login-field {
-    margin-bottom: 15px;
+    margin-bottom: 16px !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
 }
 
 .show-login-field label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    color: #333;
-    font-size: 14px;
+    display: block !important;
+    margin-bottom: 6px !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+    cursor: default !important;
 }
 
 .show-login-field input[type="text"],
 .show-login-field input[type="email"],
 .show-login-field input[type="password"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 14px;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px 12px !important;
+    margin: 0 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #333 !important;
+    background-color: #fff !important;
+    font-family: inherit !important;
+    height: auto !important;
+    min-height: 40px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
 }
 
-.show-login-field input:focus {
-    outline: none;
-    border-color: #0073aa;
-    box-shadow: 0 0 0 1px #0073aa;
+.show-login-field input[type="text"]:focus,
+.show-login-field input[type="email"]:focus,
+.show-login-field input[type="password"]:focus {
+    outline: none !important;
+    border-color: #0073aa !important;
+    box-shadow: 0 0 0 1px #0073aa !important;
 }
 
 /* Error Message */
 #show-login-error {
-    display: none;
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    font-size: 14px;
+    display: none !important;
+    background: #f8d7da !important;
+    border: 1px solid #f5c6cb !important;
+    color: #721c24 !important;
+    padding: 10px 12px !important;
+    margin: 0 0 16px 0 !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+    box-sizing: border-box !important;
 }
 
 #show-login-error.show-login-visible {
-    display: block;
+    display: block !important;
 }
 
 /* Remember Me */
 .show-login-remember {
-    margin: 15px 0;
+    margin: 16px 0 !important;
+    padding: 0 !important;
+    clear: both !important;
 }
 
 .show-login-remember label {
-    display: flex;
-    align-items: center;
-    font-weight: normal;
-    cursor: pointer;
-    font-size: 14px;
+    display: flex !important;
+    align-items: center !important;
+    font-weight: normal !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #333 !important;
+    text-align: left !important;
 }
 
 .show-login-remember input[type="checkbox"] {
-    margin-right: 8px;
+    margin: 0 8px 0 0 !important;
+    padding: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
 }
 
 /* Submit Button */
 .show-login-submit-wrapper {
-    margin-top: 20px;
+    margin-top: 20px !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
 }
 
 #show-login-submit {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px 20px !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    cursor: pointer !important;
+    transition: background 0.2s ease-in-out !important;
+    box-sizing: border-box !important;
+    font-family: inherit !important;
+    text-align: center !important;
+    text-transform: none !important;
+    height: auto !important;
+    min-height: 44px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
 }
 
 #show-login-submit:disabled {
-    background: #ccc;
-    cursor: not-allowed;
+    background: #ccc !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
 }
 
 #show-login-submit.show-login-loading {
@@ -176,79 +275,118 @@
 
 /* Loading State */
 .show-login-loading-state {
-    text-align: center;
-    padding: 40px 20px;
+    text-align: center !important;
+    padding: 40px 20px !important;
+    margin: 0 !important;
 }
 
 .show-login-loading-state p {
-    margin: 20px 0 0 0;
-    color: #666;
-    font-size: 14px;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #666 !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
 }
 
 .show-login-spinner {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #0073aa;
-    border-radius: 50%;
-    animation: show-login-spin 0.8s linear infinite;
+    width: 40px !important;
+    height: 40px !important;
+    margin: 0 auto 32px auto !important;
+    padding: 0 !important;
+    border: 4px solid #f3f3f3 !important;
+    border-top: 4px solid #0073aa !important;
+    border-radius: 50% !important;
+    animation: show-login-spin 0.8s linear infinite !important;
+    box-sizing: border-box !important;
 }
 
 .show-login-spinner.show-login-success {
-    border: 4px solid #46b450;
-    border-top: 4px solid #46b450;
-    animation: none;
-    position: relative;
+    border: 4px solid #46b450 !important;
+    border-top: 4px solid #46b450 !important;
+    animation: none !important;
+    position: relative !important;
 }
 
 .show-login-spinner.show-login-success::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #46b450;
-    font-size: 24px;
-    font-weight: bold;
+    content: '✓' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    color: #46b450 !important;
+    font-size: 24px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
 }
 
 .show-login-spinner.show-login-info {
-    border: 4px solid #00a0d2;
-    border-top: 4px solid #00a0d2;
-    animation: none;
-    position: relative;
+    border: 4px solid #00a0d2 !important;
+    border-top: 4px solid #00a0d2 !important;
+    animation: none !important;
+    position: relative !important;
 }
 
 .show-login-spinner.show-login-info::after {
-    content: 'i';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #00a0d2;
-    font-size: 24px;
-    font-weight: bold;
-    font-style: italic;
+    content: 'i' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    color: #00a0d2 !important;
+    font-size: 24px !important;
+    font-weight: bold !important;
+    font-style: italic !important;
+    line-height: 1 !important;
 }
 
 /* Cloudflare Turnstile Integration */
 .show-login-turnstile {
-    margin-bottom: 20px;
+    margin: 0 0 20px 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
 }
 
 .show-login-turnstile .cf-turnstile {
-    display: flex;
-    justify-content: center;
-    margin: 0 auto;
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
 }
 
 .show-login-turnstile .cf-turnstile-br {
-    display: none;
+    display: none !important;
 }
 
 /* Adjust spacing when Turnstile is present */
 .show-login-turnstile + .show-login-submit-wrapper {
-    margin-top: 10px;
+    margin-top: 10px !important;
+}
+
+/* Additional elements that may be added by plugins */
+#show-login-popup p {
+    margin: 0 0 12px 0 !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #333 !important;
+}
+
+#show-login-popup p:last-child {
+    margin-bottom: 0 !important;
+}
+
+#show-login-popup a {
+    color: #0073aa !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+}
+
+#show-login-popup a:hover {
+    color: #005177 !important;
+}
+
+/* Ensure any divs added by plugins don't break layout */
+#show-login-form > div:not([class*="show-login"]) {
+    margin: 16px 0 !important;
+    padding: 0 !important;
 }
