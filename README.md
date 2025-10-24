@@ -179,6 +179,13 @@ When both plugins are active and Turnstile is configured:
 - Seamless UX - users don't see CAPTCHA unless flagged as suspicious
 - All validation happens server-side - no difference in backend flow
 
+**Technical Note - Single-Use Token Handling:**
+Cloudflare Turnstile tokens are single-use only. Show Login automatically prevents double validation by skipping the Turnstile plugin's default WordPress login check (via the `cfturnstile_wp_login_checks` filter) when handling Show Login AJAX requests. This ensures:
+- Only ONE validation occurs per token
+- Show Login popup validation works correctly
+- Standard WordPress login form (`wp-login.php`) continues to work with Turnstile
+- No conflicts between the two integrations
+
 ### Filters
 
 ```php
@@ -224,6 +231,51 @@ add_action('cfturnstile_show_login_success', function($username) {
 - Custom CSS classes: `.show-login-turnstile`, `.show-login-cf-turnstile`
 - Respects Turnstile theme settings (light, dark, auto)
 - Proper spacing and layout integration
+
+## Two-Factor Authentication Integration
+
+Show Login includes built-in integration with the [Two Factor](https://wordpress.org/plugins/two-factor/) plugin for enhanced security.
+
+### Features
+
+- ✅ **Automatic Detection** - Activates only when Two Factor plugin is installed and user has 2FA enabled
+- ✅ **Seamless Redirect** - Password verified users are redirected to standard login page for 2FA
+- ✅ **Clean UX** - Clear messaging about 2FA requirement
+- ✅ **Zero Configuration** - No setup needed beyond installing Two Factor plugin
+
+### How It Works
+
+When a user with 2FA enabled attempts to login via Show Login popup:
+
+1. User enters username and password in popup
+2. Credentials validated (including Turnstile if active)
+3. If password correct but 2FA required:
+   - User sees message: "Redirecting to two-factor authentication..."
+   - **Automatically redirected to `wp-login.php` with 2FA form already displayed**
+   - **No need to re-enter username/password**
+4. User completes 2FA verification (TOTP code, email code, etc.)
+5. After 2FA verification, **user is logged in and returned to the original page**
+
+### Why This Approach?
+
+The Two Factor plugin uses complex interactive forms (TOTP codes, backup codes, U2F keys, etc.) that aren't suitable for a simple popup. By redirecting to the standard login page, we ensure:
+- Full compatibility with all 2FA methods
+- Proper security (no shortcuts around 2FA)
+- Clean UX (users understand they're on a secure login page)
+- No maintenance burden (Two Factor plugin handles all UI)
+
+### Technical Notes
+
+- Show Login intercepts the `wp_login` hook (priority 5) before Two Factor's handler (priority 10)
+- Prevents HTML output during AJAX requests
+- Creates a 2FA login nonce using `Two_Factor_Core::create_login_nonce()`
+- Returns JSON response with:
+  - `two_factor_required: true` flag
+  - `redirect_url` with pre-authenticated 2FA form URL
+- URL includes: `action=validate_2fa`, `wp-auth-id`, `wp-auth-nonce`, `redirect_to`
+- Clears temporary auth cookies (2FA not complete yet)
+- JavaScript automatically redirects to the 2FA form
+- After 2FA completion, user is redirected back to `redirect_to` URL (original page)
 
 ## Developer Documentation
 

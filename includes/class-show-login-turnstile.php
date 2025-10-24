@@ -43,6 +43,11 @@ class Show_Login_Turnstile {
         // Validate Turnstile before authentication
         add_action('show_login_before_authenticate', [__CLASS__, 'validate_turnstile']);
 
+        // Skip Turnstile plugin's default WordPress login check to prevent double validation
+        // (Turnstile tokens are single-use, so we need to prevent the plugin from checking
+        // the token on the 'authenticate' hook when Show Login handles authentication)
+        add_filter('cfturnstile_wp_login_checks', [__CLASS__, 'skip_default_wp_login_check']);
+
         // Note: Turnstile scripts are loaded dynamically via JavaScript in show-login.js
         // This ensures compatibility with full-page caching since URL parameters don't
         // trigger cache variations. The loadTurnstileScript() function handles loading.
@@ -77,6 +82,30 @@ class Show_Login_Turnstile {
         }
 
         echo '</div>';
+    }
+
+    /**
+     * Skip Turnstile plugin's default WordPress login check
+     *
+     * This prevents double validation since Show Login handles Turnstile validation
+     * in its own flow. Turnstile tokens are single-use, so we must prevent the
+     * plugin from validating on the 'authenticate' hook when we're handling it.
+     *
+     * @param bool $skip Whether to skip the check.
+     * @return bool True to skip when Show Login is processing the request.
+     */
+    public static function skip_default_wp_login_check(bool $skip): bool {
+        // Only skip if this is a Show Login AJAX request
+        // This ensures the Turnstile plugin's default WordPress login form integration
+        // continues to work normally for wp-login.php
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            // Check if this is a Show Login authentication request
+            if (isset($_POST['action']) && $_POST['action'] === 'show_login_authenticate') {
+                return true; // Skip the default check, we handle it in validate_turnstile()
+            }
+        }
+
+        return $skip; // Otherwise, let the default behavior continue
     }
 
     /**

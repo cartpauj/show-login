@@ -70,12 +70,21 @@ class Show_Login_Popup {
             ]);
         }
 
+        // Get redirect URL from POST data (current page URL sent from JS)
+        // This ensures we redirect to the actual page, not admin-ajax.php
+        $redirect_url = !empty($_POST['current_url'])
+            ? sanitize_text_field(wp_unslash($_POST['current_url']))
+            : $this->assets->get_redirect_url();
+
+        // Remove popup trigger parameters from redirect URL
+        $redirect_url = remove_query_arg(['sl', 'show_login'], $redirect_url);
+
         // User is not logged in, return popup HTML and data
         wp_send_json_success([
             'show' => true,
             'html' => $this->get_popup_html(),
             'nonce' => wp_create_nonce('show_login_nonce'),
-            'redirectUrl' => $this->assets->get_redirect_url(),
+            'redirectUrl' => $redirect_url,
             'suppressLoading' => $suppress_loading
         ]);
     }

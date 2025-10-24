@@ -89,7 +89,6 @@
         script.setAttribute('data-cfasync', 'false');
         script.onload = callback;
         script.onerror = function() {
-            console.error('Show Login: Failed to load Turnstile script');
             callback(); // Continue anyway
         };
         document.head.appendChild(script);
@@ -109,6 +108,9 @@
 
         // Load Turnstile script first (if needed), then check popup
         loadTurnstileScript(function() {
+            // Get current page URL (for redirect after login)
+            const currentUrl = window.location.href;
+
             // Make AJAX request to check login status
             fetch(showLoginData.ajaxUrl, {
                 method: 'POST',
@@ -116,7 +118,7 @@
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: 'action=show_login_check_popup'
+                body: 'action=show_login_check_popup&current_url=' + encodeURIComponent(currentUrl)
             })
             .then(response => response.json())
             .then(data => {
@@ -138,7 +140,6 @@
                 }
             })
             .catch(error => {
-                console.error('Show Login: Failed to check popup status', error);
                 // On error, close the loading popup if it exists
                 closePopup();
             });
@@ -184,6 +185,9 @@
         // Initialize popup behavior
         initializePopup();
 
+        // Render Turnstile widget if present
+        renderTurnstileWidget();
+
         // Show the popup
         const newOverlay = document.getElementById('show-login-overlay');
         if (newOverlay) {
@@ -222,12 +226,48 @@
             // Initialize popup behavior
             initializePopup();
 
+            // Render Turnstile widget if present
+            renderTurnstileWidget();
+
             // Show the popup
             const newOverlay = document.getElementById('show-login-overlay');
             if (newOverlay) {
                 newOverlay.classList.add('show-login-active');
             }
         }, 1000);
+    }
+
+    /**
+     * Render Turnstile widget after popup is shown
+     */
+    function renderTurnstileWidget() {
+        // Check if Turnstile is loaded and widget is present
+        if (typeof window.turnstile === 'undefined') {
+            return;
+        }
+
+        const turnstileWidget = document.querySelector('.cf-turnstile');
+        if (!turnstileWidget) {
+            return;
+        }
+
+        // Get widget configuration from data attributes
+        const widgetId = turnstileWidget.id;
+        const sitekey = turnstileWidget.getAttribute('data-sitekey');
+
+        // Check if widget is already rendered (has content)
+        if (turnstileWidget.innerHTML.trim()) {
+            return;
+        }
+
+        // Render the widget explicitly
+        try {
+            window.turnstile.render('#' + widgetId, {
+                sitekey: sitekey
+            });
+        } catch (e) {
+            // Failed to render widget - silently continue
+        }
     }
 
     /**
@@ -300,13 +340,58 @@
         submitBtn.disabled = true;
         submitBtn.classList.add('show-login-loading');
 
-        // Prepare form data
-        const formData = new FormData();
+        // Check if Turnstile is present and needs to execute
+        const turnstileWidget = document.querySelector('.cf-turnstile');
+
+        if (turnstileWidget && typeof window.turnstile !== 'undefined') {
+            // Check if Turnstile has already been completed
+            const turnstileResponse = document.querySelector('input[name="cf-turnstile-response"]');
+
+            if (!turnstileResponse || !turnstileResponse.value) {
+                // Turnstile hasn't executed yet - wait for it
+                // For interaction-only mode, Turnstile should execute automatically
+                // Wait up to 3 seconds for the token to appear
+                let attempts = 0;
+                const maxAttempts = 30; // 30 x 100ms = 3 seconds
+
+                const checkInterval = setInterval(function() {
+                    attempts++;
+                    const response = document.querySelector('input[name="cf-turnstile-response"]');
+
+                    if (response && response.value) {
+                        // Token found!
+                        clearInterval(checkInterval);
+                        submitLoginForm(submitBtn, errorDiv);
+                    } else if (attempts >= maxAttempts) {
+                        // Timeout - submit anyway and let server handle it
+                        clearInterval(checkInterval);
+                        submitLoginForm(submitBtn, errorDiv);
+                    }
+                }, 100);
+                return;
+            }
+        }
+
+        // Submit the form (no Turnstile present or already completed)
+        submitLoginForm(submitBtn, errorDiv);
+    }
+
+    /**
+     * Submit login form with AJAX
+     */
+    function submitLoginForm(submitBtn, errorDiv) {
+        // Prepare form data from the form element to capture all fields including Turnstile
+        const form = document.getElementById('show-login-form');
+        const formData = new FormData(form);
         formData.append('action', 'show_login_authenticate');
         formData.append('nonce', showLoginData.nonce);
-        formData.append('username', username);
-        formData.append('password', password);
-        formData.append('remember', remember ? '1' : '0');
+        formData.append('redirect_to', showLoginData.redirectUrl);
+
+        // Manually add Turnstile response if it exists (it may be outside the form)
+        const turnstileResponse = document.querySelector('input[name="cf-turnstile-response"]');
+        if (turnstileResponse && turnstileResponse.value) {
+            formData.append('cf-turnstile-response', turnstileResponse.value);
+        }
 
         // Send AJAX request
         fetch(showLoginData.ajaxUrl, {
@@ -314,23 +399,78 @@
             credentials: 'same-origin',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                // Non-JSON response (likely HTML from 2FA or other redirect)
+                throw new Error('Invalid response format');
+            }
+        })
         .then(data => {
             if (data.success) {
                 // Successful login - reload page
                 window.location.href = showLoginData.redirectUrl;
             } else {
+                // Check if 2FA is required
+                if (data.data && data.data.two_factor_required && data.data.redirect_url) {
+                    // Redirect to standard login page for 2FA
+                    window.location.href = data.data.redirect_url;
+                    return;
+                }
+
                 // Show error message
                 showError(data.data.message || 'Login failed. Please try again.');
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('show-login-loading');
+
+                // Reset Turnstile widget for next attempt (tokens are single-use)
+                resetTurnstileWidget();
             }
         })
         .catch(error => {
             showError('An error occurred. Please try again.');
             submitBtn.disabled = false;
             submitBtn.classList.remove('show-login-loading');
+
+            // Reset Turnstile widget for next attempt (tokens are single-use)
+            resetTurnstileWidget();
         });
+    }
+
+    /**
+     * Reset Turnstile widget after failed submission
+     * Turnstile tokens are single-use, so we need a new token for each attempt
+     */
+    function resetTurnstileWidget() {
+        // Check if Turnstile is loaded and widget exists
+        if (typeof window.turnstile === 'undefined') {
+            return;
+        }
+
+        const turnstileWidget = document.querySelector('.cf-turnstile');
+        if (!turnstileWidget) {
+            return;
+        }
+
+        // Reset the widget to generate a new token
+        try {
+            window.turnstile.reset(turnstileWidget);
+        } catch (e) {
+            // If reset fails, try to re-render
+            try {
+                const widgetId = turnstileWidget.id;
+                const sitekey = turnstileWidget.getAttribute('data-sitekey');
+                window.turnstile.remove('#' + widgetId);
+                window.turnstile.render('#' + widgetId, {
+                    sitekey: sitekey
+                });
+            } catch (e2) {
+                // Silent fail - widget will need manual refresh
+            }
+        }
     }
 
     /**
