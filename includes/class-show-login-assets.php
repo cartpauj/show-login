@@ -152,6 +152,9 @@ class Show_Login_Assets {
          * @param string $redirect_url The URL to redirect to after login.
          * @param string $current_url  The current page URL before removing sl parameter.
          */
-        return apply_filters('show_login_redirect_url', $redirect_url, $current_url);
+        $redirect_url = apply_filters('show_login_redirect_url', $redirect_url, $current_url);
+
+        // Validate redirect URL to prevent open redirects (must be internal)
+        return wp_validate_redirect($redirect_url, home_url());
     }
 }

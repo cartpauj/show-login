@@ -185,7 +185,6 @@ class Show_Login_Authenticator {
 
         wp_send_json_success([
             'message' => __('Login successful! Redirecting...', 'show-login'),
-            'user_id' => $user->ID,
         ]);
     }
 

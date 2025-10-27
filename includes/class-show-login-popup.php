@@ -79,6 +79,9 @@ class Show_Login_Popup {
         // Remove popup trigger parameters from redirect URL
         $redirect_url = remove_query_arg(['sl', 'show_login'], $redirect_url);
 
+        // Validate redirect URL to prevent open redirects (must be internal)
+        $redirect_url = wp_validate_redirect($redirect_url, home_url());
+
         // User is not logged in, return popup HTML and data
         wp_send_json_success([
             'show' => true,
