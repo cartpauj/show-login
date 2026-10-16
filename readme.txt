@@ -23,7 +23,7 @@ Show Login adds a beautiful, accessible login popup to your WordPress site that 
 * **Instant Feedback** - Loading spinner appears immediately, smooth transitions
 * **Secure by Default** - Built-in rate limiting and security features
 * **Fully Accessible** - WCAG compliant with proper ARIA attributes
-* **Translation Ready** - Supports internationalization
+* **Translation Ready** - Every message can be translated, and it works with Loco Translate out of the box
 * **Developer Friendly** - Extensive hooks for customization
 * **Social Login** - Shows MemberPress / WishList Member Social Login and Login with Google buttons in the popup
 * **Well Architected** - Proper separation of concerns with dedicated classes
@@ -165,6 +165,10 @@ Yes! Users can close the popup by:
 = Does this work with other plugins? =
 
 Yes! Show Login uses standard WordPress authentication and provides hooks for other plugins to integrate. It works with most membership, security, and authentication plugins.
+
+= How do I translate the plugin? =
+
+Install Loco Translate, go to Loco Translate > Plugins > Show Login, and add a language. Keep Loco's default save location (Custom) or use System. Don't save translations inside the plugin's own folder: plugin updates replace that folder and the translations would be lost.
 
 = Where can I get support? =
 
