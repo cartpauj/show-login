@@ -23,7 +23,7 @@ class Show_Login {
      *
      * @var string
      */
-    public const VERSION = '1.1.0';
+    public const VERSION = '1.1.1';
 
     /**
      * Singleton instance

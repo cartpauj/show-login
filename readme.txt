@@ -4,7 +4,7 @@ Tags: login, popup, ajax, frontend, modal
 Requires at least: 5.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -279,6 +279,10 @@ Adds social login buttons to the popup (MemberPress / WishList Member Social Log
 Initial release of Show Login. Enjoy seamless front-end login popups!
 
 == Changelog ==
+
+= 1.1.1 =
+* Fix: The popup's status and error messages ("Checking login status...", "You're not logged in", and others) were always in English. They can now be translated.
+* New: Works with Loco Translate out of the box.
 
 = 1.1.0 =
 * New: Social login buttons in the popup for MemberPress and WishList Member Social Login, and Login with Google. After logging in, people return to the page they were on.
