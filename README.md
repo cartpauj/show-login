@@ -9,7 +9,7 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 - **Cache Compatible** - Works perfectly with all page caching solutions (WP Rocket, LiteSpeed, etc.)
 - **Turnstile Integration** - Automatic integration with [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) plugin for CAPTCHA protection
 - **Two-Factor Authentication** - Automatic integration with [Two Factor](https://wordpress.org/plugins/two-factor/) plugin with seamless redirect flow
-- **Social Login** - Shows the buttons from MemberPress, WishList Member and MemberCore Social Login, and from [Login with Google](https://wordpress.org/plugins/login-with-google/), sending people back to the page they were on
+- **Social Login** - Shows the buttons from MemberPress and WishList Member Social Login, and from [Login with Google](https://wordpress.org/plugins/login-with-google/), sending people back to the page they were on
 - **Secure** - Rate limiting, nonce verification, username enumeration prevention, and proper sanitization
 - **Fast UX** - Instant loading spinner with smooth transitions
 - **Accessible** - WCAG compliant with proper ARIA attributes
@@ -295,7 +295,7 @@ Show Login puts social login buttons at the top of the popup, above an "or" divi
 
 | Plugin | Shown when |
 |---|---|
-| MemberPress Social Login, WishList Member Social Login, MemberCore Social Login (Caseproof) | At least one provider is enabled and verified. One button per provider. |
+| MemberPress Social Login, WishList Member Social Login (Caseproof) | At least one provider is enabled and verified. One button per provider. |
 | [Login with Google](https://wordpress.org/plugins/login-with-google/) (rtCamp) | Its Client ID and Client Secret are set (in settings or with the `WP_GOOGLE_LOGIN_CLIENT_ID` / `WP_GOOGLE_LOGIN_SECRET` constants). |
 
 Nothing to configure. If none of them is set up, the popup looks exactly as before.
@@ -789,7 +789,7 @@ GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 ## Changelog
 
 ### 1.1.0
-- **New:** Social login buttons in the popup for MemberPress, WishList Member and MemberCore Social Login, and [Login with Google](https://wordpress.org/plugins/login-with-google/). After logging in, people return to the page they were on. See **Social Login Integration**.
+- **New:** Social login buttons in the popup for MemberPress and WishList Member Social Login, and [Login with Google](https://wordpress.org/plugins/login-with-google/). After logging in, people return to the page they were on. See **Social Login Integration**.
 - **New:** `show_login_social_buttons` action for adding your own login buttons above the form.
 - **New:** Install with Composer (`composer require cartpauj/show-login`) or download the zip from GitHub releases.
 - **Fix:** Links with special characters (like `%20`) were changed when sending people back after login or two-factor.

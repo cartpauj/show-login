@@ -25,7 +25,7 @@ Show Login adds a beautiful, accessible login popup to your WordPress site that 
 * **Fully Accessible** - WCAG compliant with proper ARIA attributes
 * **Translation Ready** - Supports internationalization
 * **Developer Friendly** - Extensive hooks for customization
-* **Social Login** - Shows MemberPress / WishList Member / MemberCore Social Login and Login with Google buttons in the popup
+* **Social Login** - Shows MemberPress / WishList Member Social Login and Login with Google buttons in the popup
 * **Well Architected** - Proper separation of concerns with dedicated classes
 
 = How It Works =
@@ -269,7 +269,7 @@ add_filter('show_login_button_text_color', function($color) {
 == Upgrade Notice ==
 
 = 1.1.0 =
-Adds social login buttons to the popup (MemberPress / WishList Member / MemberCore Social Login and Login with Google) and fixes several redirect and lockout bugs.
+Adds social login buttons to the popup (MemberPress / WishList Member Social Login and Login with Google) and fixes several redirect and lockout bugs.
 
 = 1.0.0 =
 Initial release of Show Login. Enjoy seamless front-end login popups!
@@ -277,7 +277,7 @@ Initial release of Show Login. Enjoy seamless front-end login popups!
 == Changelog ==
 
 = 1.1.0 =
-* New: Social login buttons in the popup for MemberPress, WishList Member and MemberCore Social Login, and Login with Google. After logging in, people return to the page they were on.
+* New: Social login buttons in the popup for MemberPress and WishList Member Social Login, and Login with Google. After logging in, people return to the page they were on.
 * New: `show_login_social_buttons` action for adding your own login buttons above the form.
 * New: Install with Composer (`composer require cartpauj/show-login`) or download the zip from GitHub releases.
 * Fix: Links with special characters (like `%20`) were changed when sending people back after login or two-factor.

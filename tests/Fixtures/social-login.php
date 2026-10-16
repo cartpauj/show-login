@@ -2,7 +2,7 @@
 
 /**
  * Minimal stand-ins for the Caseproof social login add-ons
- * (MemberPress / WishList Member / MemberCore Social Login).
+ * (MemberPress / WishList Member Social Login).
  *
  * Each add-on exposes a function returning its handler, whose public
  * $oauthProviders holds provider objects. Tests set the handlers through
@@ -54,7 +54,7 @@ class Show_Login_Test_Social_Handler {
 }
 
 function show_login_test_social_reset(): void {
-    $GLOBALS['show_login_test_social'] = ['mpsl' => null, 'wlmsl' => null, 'mcsl' => null];
+    $GLOBALS['show_login_test_social'] = ['mpsl' => null, 'wlmsl' => null];
 }
 show_login_test_social_reset();
 
@@ -64,8 +64,4 @@ function mpslHandlerInstance() {
 
 function wlmslHandlerInstance() {
     return $GLOBALS['show_login_test_social']['wlmsl'];
-}
-
-function mcslHandlerInstance() {
-    return $GLOBALS['show_login_test_social']['mcsl'];
 }
