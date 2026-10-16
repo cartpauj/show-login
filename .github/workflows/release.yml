@@ -1,0 +1,44 @@
+name: Release
+
+# Runs when a version tag is pushed (see RELEASES.md). Packagist picks the tag up
+# on its own; this workflow adds a GitHub release with an installable zip for
+# sites that don't use Composer.
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches the plugin version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          header=$(grep -m1 -E '^\s*\*\s*Version:' show-login.php | awk '{print $NF}')
+          constant=$(grep -m1 "SHOW_LOGIN_VERSION'," show-login.php | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+          class_const=$(grep -m1 "const VERSION" includes/class-show-login.php | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+          stable=$(grep -m1 -i '^Stable tag:' readme.txt | awk '{print $NF}')
+          echo "tag=$tag header=$header constant=$constant class=$class_const readme=$stable"
+          for v in "$header" "$constant" "$class_const" "$stable"; do
+            if [[ "$v" != "$tag" ]]; then
+              echo "::error::Version mismatch. Every version in RELEASES.md step 2 must equal $tag."
+              exit 1
+            fi
+          done
+
+      - name: Package contents
+        run: bin/check-package.sh
+
+      - name: Build zip
+        run: git archive --format=zip --prefix=show-login/ -o "show-login-${GITHUB_REF_NAME#v}.zip" HEAD
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "show-login-${GITHUB_REF_NAME#v}.zip" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag

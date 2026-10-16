@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Login Popup Template
  *
@@ -31,6 +32,28 @@ if (!defined('ABSPATH')) {
         ?>
 
         <div id="show-login-error" role="alert"></div>
+
+        <?php
+        ob_start();
+
+        /**
+         * Fires where social / single sign-on login buttons go, above the form.
+         * Anything echoed here is shown with an "or" divider below it.
+         *
+         * @since 1.1.0
+         * @param string $redirect_url Where to send the user after they log in.
+         *                             Same-site, with the popup trigger removed.
+         */
+        do_action('show_login_social_buttons', $redirect_url);
+
+        $show_login_social = trim(ob_get_clean());
+        ?>
+        <?php if ($show_login_social !== '') : ?>
+            <div class="show-login-social">
+                <?php echo $show_login_social; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Callbacks escape their own output, like any action that prints. ?>
+            </div>
+            <div class="show-login-divider"><span><?php esc_html_e('or', 'show-login'); ?></span></div>
+        <?php endif; ?>
 
         <form id="show-login-form" method="post" novalidate>
             <?php

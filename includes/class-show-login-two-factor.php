@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Two Factor Authentication Integration
  *
@@ -49,11 +50,12 @@ class Show_Login_Two_Factor {
      */
     public static function handle_two_factor_redirect(string $user_login, $user): void {
         // Only handle during Show Login AJAX requests
-        if (!defined('DOING_AJAX') || !DOING_AJAX) {
+        if (!wp_doing_ajax()) {
             return;
         }
 
         // Check if this is a Show Login authentication request
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only routing; the nonce was verified before wp_signon().
         if (!isset($_POST['action']) || $_POST['action'] !== 'show_login_authenticate') {
             return;
         }
@@ -83,9 +85,11 @@ class Show_Login_Two_Factor {
         }
 
         // Get redirect URL from POST data (where user should go after successful 2FA)
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified before wp_signon() fired this hook.
         $redirect_to = !empty($_POST['redirect_to'])
-            ? sanitize_text_field(wp_unslash($_POST['redirect_to']))
+            ? esc_url_raw(wp_unslash($_POST['redirect_to']))
             : admin_url();
+        // phpcs:enable
 
         // Build the 2FA login URL with all required parameters
         // This will show the 2FA form directly without requiring re-login

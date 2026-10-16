@@ -8,11 +8,12 @@
  * across all WordPress themes without affecting the theme's own styles.
  */
 
-/* CSS Reset for popup elements to prevent theme interference */
+/* CSS Reset for popup elements to prevent theme interference.
+   Social login buttons are left out: they bring their own styles. */
 #show-login-overlay,
-#show-login-overlay *,
-#show-login-overlay *::before,
-#show-login-overlay *::after {
+#show-login-overlay *:where(:not(.show-login-social *)),
+#show-login-overlay *:where(:not(.show-login-social *))::before,
+#show-login-overlay *:where(:not(.show-login-social *))::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -375,13 +376,13 @@
     margin-bottom: 0 !important;
 }
 
-#show-login-popup a {
+#show-login-popup a:not(.show-login-social a) {
     color: #0073aa !important;
     text-decoration: underline !important;
     cursor: pointer !important;
 }
 
-#show-login-popup a:hover {
+#show-login-popup a:not(.show-login-social a):hover {
     color: #005177 !important;
 }
 
@@ -389,4 +390,52 @@
 #show-login-form > div:not([class*="show-login"]) {
     margin: 16px 0 !important;
     padding: 0 !important;
+}
+
+/* Social / single sign-on buttons (above the form) */
+.show-login-social {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    margin: 0 0 16px !important;
+}
+
+.show-login-social .cspf-shortcode-login-button,
+.show-login-social .cspfsl-social-login-btn {
+    display: block !important;
+    text-decoration: none !important;
+}
+
+/* Caseproof social login: full-width, centered, like the login form button */
+.show-login-social [class$="-login-btn"] {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+}
+
+/* Both plugins add spacing meant for their own pages; the gap above handles it here */
+.show-login-social .wp_google_login,
+.show-login-social .wp_google_login__button-container,
+.show-login-social .cspfsl-social-login-btn,
+.show-login-social [class$="-login-btn"] {
+    margin: 0 !important;
+}
+
+.show-login-divider {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 0 0 16px !important;
+    color: #757575 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+}
+
+.show-login-divider::before,
+.show-login-divider::after {
+    content: "" !important;
+    flex: 1 !important;
+    border-top: 1px solid #ddd !important;
 }

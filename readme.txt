@@ -25,6 +25,7 @@ Show Login adds a beautiful, accessible login popup to your WordPress site that 
 * **Fully Accessible** - WCAG compliant with proper ARIA attributes
 * **Translation Ready** - Supports internationalization
 * **Developer Friendly** - Extensive hooks for customization
+* **Social Login** - Shows MemberPress / WishList Member / MemberCore Social Login and Login with Google buttons in the popup
 * **Well Architected** - Proper separation of concerns with dedicated classes
 
 = How It Works =
@@ -66,7 +67,7 @@ Show Login provides numerous hooks and filters for developers:
 * Integrate with other authentication systems
 * Customize rate limiting settings
 
-See the [GitHub repository](https://github.com/caseproof/show-login) for full developer documentation.
+See the [GitHub repository](https://github.com/cartpauj/show-login) for full developer documentation.
 
 == Installation ==
 
@@ -167,8 +168,8 @@ Yes! Show Login uses standard WordPress authentication and provides hooks for ot
 
 = Where can I get support? =
 
-* Check the [plugin documentation](https://github.com/caseproof/show-login)
-* Submit issues on [GitHub](https://github.com/caseproof/show-login/issues)
+* Check the [plugin documentation](https://github.com/cartpauj/show-login)
+* Submit issues on [GitHub](https://github.com/cartpauj/show-login/issues)
 * Visit the [support forum](https://wordpress.org/support/plugin/show-login/)
 
 = Can I customize the popup design? =
@@ -319,7 +320,7 @@ Show Login provides extensive hooks for customization and integration.
 * `show_login_rate_limit_window` - Adjust rate limit window
 * `show_login_client_ip` - Override IP detection
 
-For complete developer documentation, examples, and code snippets, visit the [GitHub repository](https://github.com/caseproof/show-login).
+For complete developer documentation, examples, and code snippets, visit the [GitHub repository](https://github.com/cartpauj/show-login).
 
 == Privacy Policy ==
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Cloudflare Turnstile Integration
  *
@@ -98,8 +99,9 @@ class Show_Login_Turnstile {
         // Only skip if this is a Show Login AJAX request
         // This ensures the Turnstile plugin's default WordPress login form integration
         // continues to work normally for wp-login.php
-        if (defined('DOING_AJAX') && DOING_AJAX) {
+        if (wp_doing_ajax()) {
             // Check if this is a Show Login authentication request
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only routing; Show Login verifies its nonce itself.
             if (isset($_POST['action']) && $_POST['action'] === 'show_login_authenticate') {
                 return true; // Skip the default check, we handle it in validate_turnstile()
             }
@@ -144,7 +146,7 @@ class Show_Login_Turnstile {
                 : __('Please verify you are human.', 'show-login');
 
             // Fire Turnstile failure action
-            do_action('cfturnstile_show_login_failed', $username);
+            do_action('cfturnstile_show_login_failed', $username); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public hook name, kept for compatibility.
 
             wp_send_json_error([
                 'message' => $error_message
@@ -152,7 +154,7 @@ class Show_Login_Turnstile {
         }
 
         // Fire success action
-        do_action('cfturnstile_show_login_success', $username);
+        do_action('cfturnstile_show_login_success', $username); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public hook name, kept for compatibility.
     }
 }
 

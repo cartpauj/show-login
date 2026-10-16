@@ -1,2 +1,12 @@
+# Local copies of plugins Show Login integrates with.
 simple-cloudflare*
 two-factor/
+
+# Dev dependencies and build output.
+/vendor/
+/node_modules/
+/tmp/
+/coverage/
+
+# This is a library-style plugin: consumers resolve their own versions.
+/composer.lock

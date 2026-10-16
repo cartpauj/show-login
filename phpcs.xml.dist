@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<ruleset name="Show Login">
+    <description>
+        Coding standard for Show Login. Built only from public packages so anyone can run it:
+        PSR-12 layout, WordPress security/API sniffs, and PHP 7.4+ compatibility.
+    </description>
+
+    <file>.</file>
+
+    <exclude-pattern>/vendor/*</exclude-pattern>
+    <exclude-pattern>/node_modules/*</exclude-pattern>
+    <exclude-pattern>/tmp/*</exclude-pattern>
+    <!-- Dev-only CLI helpers; never loaded by WordPress. -->
+    <exclude-pattern>/bin/*</exclude-pattern>
+
+    <arg name="basepath" value="."/>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <config name="testVersion" value="7.4-"/>
+    <config name="minimum_wp_version" value="6.0"/>
+
+    <!-- Layout: PSR-12, minus the parts this codebase has always done differently. -->
+    <rule ref="PSR12">
+        <!-- Classes and methods open their brace on the same line. -->
+        <exclude name="PSR2.Classes.ClassDeclaration.OpenBraceNewLine"/>
+        <exclude name="Squiz.Functions.MultiLineFunctionDeclaration.BraceOnSameLine"/>
+        <!-- Plugin files mix declarations with the ABSPATH guard / hook registration, as WordPress plugins do. -->
+        <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
+        <!-- WordPress-style class names (Show_Login_Assets) and method names (get_instance). -->
+        <exclude name="Squiz.Classes.ValidClassName.NotCamelCaps"/>
+        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+        <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+        <exclude name="Generic.Files.LineLength.TooLong"/>
+    </rule>
+
+    <!-- WordPress: security, i18n, and correct API use. -->
+    <rule ref="WordPress.Security"/>
+    <rule ref="WordPress.WP"/>
+    <rule ref="WordPress.DB"/>
+    <rule ref="WordPress.PHP.StrictInArray"/>
+    <rule ref="WordPress.PHP.NoSilencedErrors"/>
+    <rule ref="WordPress.PHP.DiscouragedPHPFunctions"/>
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="show_login"/>
+                <element value="Show_Login"/>
+                <element value="SHOW_LOGIN"/>
+            </property>
+        </properties>
+    </rule>
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="show-login"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!-- Tests: layout and compatibility only. They poke at $_POST and globals on purpose. -->
+    <rule ref="WordPress.Security">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.DB">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.PHP.DiscouragedPHPFunctions">
+        <exclude-pattern>/tests/*</exclude-pattern>
+    </rule>
+</ruleset>

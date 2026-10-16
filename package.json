@@ -1,0 +1,24 @@
+{
+  "name": "show-login",
+  "private": true,
+  "description": "Dev tooling for the Show Login WordPress plugin (JS tests only; nothing here ships).",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "roots": ["<rootDir>/tests/js"],
+    "collectCoverageFrom": ["assets/js/**/*.js"],
+    "coverageDirectory": "tmp/coverage-js",
+    "coverageReporters": ["text", "clover"],
+    "coverageThreshold": {
+      "global": { "lines": 90, "statements": 90, "functions": 90, "branches": 90 }
+    }
+  }
+}

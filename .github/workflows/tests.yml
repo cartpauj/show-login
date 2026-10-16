@@ -1,0 +1,122 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly, so a new WordPress release or nightly break shows up even when nobody pushes.
+    - cron: '0 22 * * 0'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  wp-versions:
+    name: Pick WordPress versions
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+      latest: ${{ steps.pick.outputs.latest }}
+    steps:
+      # nightly + newest release of the current major + newest release of the previous major.
+      # e.g. ["nightly", "7.1.3", "6.9.4"]. Updates itself when WordPress ships.
+      - id: pick
+        run: |
+          versions=$(curl -fsSL https://api.wordpress.org/core/stable-check/1.0/ | jq -r 'keys[]' | sort -V)
+          latest=$(echo "$versions" | tail -1)
+          major=${latest%%.*}
+          previous=$(echo "$versions" | grep "^$((major - 1))\." | tail -1)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(jq -cn --arg a "$latest" --arg b "$previous" '["nightly", $a, $b]')" >> "$GITHUB_OUTPUT"
+          echo "Testing against: nightly, $latest, $previous"
+
+  phpunit:
+    name: PHP ${{ matrix.php }} / WP ${{ matrix.wp }}
+    needs: wp-versions
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.wp == 'nightly' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.2', '8.4']
+        wp: ${{ fromJson(needs.wp-versions.outputs.matrix) }}
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
+    env:
+      DB_USER: root
+      DB_PASS: root
+      DB_HOST: 127.0.0.1:3306
+      # Coverage (and the 90% gate) runs once: newest PHP + newest WordPress release.
+      COVERAGE: ${{ matrix.php == '8.4' && matrix.wp == needs.wp-versions.outputs.latest }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: ${{ env.COVERAGE == 'true' && 'pcov' || 'none' }}
+          tools: composer:v2
+
+      - name: Install Composer packages
+        run: composer update --no-interaction --no-progress
+
+      - name: Install WordPress ${{ matrix.wp }}
+        run: composer tests-install -- "${{ matrix.wp }}"
+
+      - name: Run tests
+        if: env.COVERAGE != 'true'
+        run: composer test
+
+      - name: Run tests with coverage (must be 90%+)
+        if: env.COVERAGE == 'true'
+        run: composer test:coverage
+
+  jest:
+    name: JavaScript tests (coverage must be 90%+)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test:coverage
+
+  phpcs:
+    name: Coding standards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+          tools: composer:v2
+      - run: composer update --no-interaction --no-progress
+      - run: composer cs-check
+
+  package:
+    name: Package contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: composer.json is valid
+        run: composer validate --strict
+      - name: Release zip contains only plugin files
+        run: bin/check-package.sh

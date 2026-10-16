@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+    bootstrap="./tests/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    convertDeprecationsToExceptions="true"
+    cacheResultFile="./tmp/.phpunit.result.cache"
+    >
+    <testsuites>
+        <testsuite name="Show Login Tests">
+            <directory suffix="Test.php">./tests/TestCases/</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage>
+        <include>
+            <directory suffix=".php">./includes</directory>
+            <directory suffix=".php">./templates</directory>
+            <file>./show-login.php</file>
+        </include>
+    </coverage>
+</phpunit>
