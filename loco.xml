@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tells Loco Translate where this plugin's strings and template live.
+     No <target>: translations are never stored in the plugin folder, where an update
+     would wipe them. Loco saves them in wp-content/languages/ instead. -->
+<bundle name="Show Login">
+  <domain name="show-login">
+    <project name="Show Login" slug="show-login">
+      <source>
+        <directory>.</directory>
+        <exclude>
+          <directory>vendor</directory>
+          <directory>node_modules</directory>
+          <directory>tests</directory>
+          <directory>bin</directory>
+          <directory>tmp</directory>
+          <directory>languages</directory>
+        </exclude>
+      </source>
+      <template locked="true">
+        <file>languages/show-login.pot</file>
+      </template>
+    </project>
+  </domain>
+</bundle>

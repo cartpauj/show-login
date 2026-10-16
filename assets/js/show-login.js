@@ -7,6 +7,9 @@
 (function() {
     'use strict';
 
+    // Translations come from WordPress (wp-i18n). See wp_set_script_translations() in class-show-login-assets.php.
+    const { __ } = wp.i18n;
+
     /**
      * Check if popup trigger parameter is in the URL
      * Supports: ?sl=true, ?sl=1, ?show_login=true, ?show_login=1
@@ -52,7 +55,7 @@
                 <div id="show-login-popup">
                     <div class="show-login-loading-state">
                         <div class="show-login-spinner"></div>
-                        <p>Checking login status...</p>
+                        <p>${__('Checking login status...', 'show-login')}</p>
                     </div>
                 </div>
             </div>
@@ -161,7 +164,7 @@
         if (loadingState) {
             loadingState.innerHTML = `
                 <div class="show-login-spinner show-login-success"></div>
-                <p>You're already logged in!</p>
+                <p>${__('You\'re already logged in!', 'show-login')}</p>
             `;
         }
 
@@ -210,7 +213,7 @@
         if (loadingState) {
             loadingState.innerHTML = `
                 <div class="show-login-spinner show-login-info"></div>
-                <p>You're not logged in</p>
+                <p>${__('You\'re not logged in', 'show-login')}</p>
             `;
         }
 
@@ -338,7 +341,7 @@
 
         // Validation
         if (!username || !password) {
-            showError('Please enter both username and password.');
+            showError(__('Please enter both username and password.', 'show-login'));
             return;
         }
 
@@ -428,7 +431,7 @@
                 }
 
                 // Show error message
-                showError(data.data.message || 'Login failed. Please try again.');
+                showError(data.data.message || __('Login failed. Please try again.', 'show-login'));
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('show-login-loading');
 
@@ -437,7 +440,7 @@
             }
         })
         .catch(error => {
-            showError('An error occurred. Please try again.');
+            showError(__('An error occurred. Please try again.', 'show-login'));
             submitBtn.disabled = false;
             submitBtn.classList.remove('show-login-loading');
 

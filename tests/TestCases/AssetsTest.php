@@ -45,7 +45,17 @@ class AssetsTest extends TestCase
         $this->assertSame('https://example.org/wp-content/plugins/show-login/assets/js/show-login.js', $script->src);
         $this->assertSame('9.9.9', $style->ver);
         $this->assertSame('9.9.9', $script->ver);
-        $this->assertSame([], $script->deps, 'The script must not depend on jQuery or anything else.');
+        $this->assertSame(['wp-i18n'], $script->deps, 'Only WordPress\'s translation helper; no jQuery.');
+    }
+
+    public function testLoadsScriptTranslationsFromWordPressLanguagesFolder(): void
+    {
+        $this->assets->enqueue_assets();
+
+        $script = wp_scripts()->registered['show-login'];
+        $this->assertSame('show-login', $script->textdomain);
+        // No plugin path: translations live in wp-content/languages/ so updates can't wipe them.
+        $this->assertSame('', $script->translations_path);
     }
 
     public function testLocalizesAjaxUrlAndLoadingFlag(): void

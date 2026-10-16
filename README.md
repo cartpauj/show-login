@@ -14,7 +14,7 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 - **Fast UX** - Instant loading spinner with smooth transitions
 - **Accessible** - WCAG compliant with proper ARIA attributes
 - **Extensible** - Multiple hooks for custom authentication flows and customization
-- **Translation Ready** - Fully internationalized with i18n support
+- **Translation Ready** - Every message, including the popup's JavaScript ones, can be translated. Works with [Loco Translate](https://wordpress.org/plugins/loco-translate/) out of the box
 - **Well Architected** - Proper MVC separation with dedicated classes for each concern
 - **Multiple URL Triggers** - Supports `?sl=true`, `?sl=1`, `?show_login=true`, and `?show_login=1`
 
@@ -328,6 +328,23 @@ add_action('plugins_loaded', function () {
 }, 30);
 ```
 
+## Translations
+
+Show Login works with [Loco Translate](https://wordpress.org/plugins/loco-translate/) with no setup:
+
+1. Install and activate Loco Translate.
+2. Go to **Loco Translate → Plugins → Show Login** and click **New language**.
+3. Leave the location on Loco's default (**Custom**, in `wp-content/languages/loco/`) and translate.
+
+Save it there or in **System** (`wp-content/languages/plugins/`), **not** in the plugin's own folder. Plugin updates replace the plugin folder, so translations saved inside it would be lost.
+
+When you save, Loco also builds the small `.json` files the popup's JavaScript messages need. Nothing else to do.
+
+### Good to know
+
+- The plugin ships only the blank template, `languages/show-login.pot`. It isn't on WordPress.org, so there are no automatic language packs.
+- Any tool that writes standard `.po`/`.mo` (and WordPress `.json`) files works too. Put them in `wp-content/languages/plugins/`, named like `show-login-de_DE.mo`.
+
 ## Developer Documentation
 
 ### Hooks & Filters
@@ -559,6 +576,9 @@ show-login/
 │       └── show-login.js                   # Front-end behavior + Turnstile loader
 ├── templates/
 │   └── popup.php                           # Login popup HTML
+├── languages/
+│   └── show-login.pot                      # Translation template (built by composer make-pot)
+├── loco.xml                                # Tells Loco Translate where strings and template live
 ├── README.md                               # Technical documentation
 └── readme.txt                              # WordPress.org readme
 ```
@@ -750,6 +770,7 @@ Other settings: `DB_HOST` (default `localhost`, `host:port` works) and `DB_NAME`
 | `npm run test:coverage` | JavaScript tests, fails under 90% coverage |
 | `composer cs-check` | Coding standards (PSR-12 + WordPress security sniffs + PHP 7.4 compatibility) |
 | `composer cs-fix` | Auto-fixes what it can |
+| `composer make-pot` | Rebuilds the translation template `languages/show-login.pot`. Run it after adding or changing any user-facing text, then commit the file. |
 | `bin/check-package.sh` | Checks that the package/zip contains only plugin files |
 
 ### Test layout
@@ -772,6 +793,7 @@ The PHP tests never make network calls (`WP_HTTP_BLOCK_EXTERNAL`). Two Factor an
 - **PHP tests:** PHP 7.4, 8.2 and 8.4 against WordPress nightly, the newest release, and the newest release of the previous major (e.g. 7.1.x and 6.9.x). The WordPress versions are looked up automatically. Nightly failures are reported but don't fail the build.
 - **Coverage:** the PHP 8.4 + newest-WordPress run and the JS run both fail under 90%.
 - **Coding standards**, **composer.json validation**, and the **package contents** check.
+- **Translation template:** fails if user-facing text changed but `languages/show-login.pot` wasn't rebuilt. Run `composer make-pot` and commit. A version bump trips it too, since the template records the version.
 
 ### What ships
 

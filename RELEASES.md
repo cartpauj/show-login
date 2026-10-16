@@ -65,6 +65,7 @@ composer test:coverage   # PHP tests + fails under 90% coverage (needs pcov or x
 npm run test:coverage    # JS tests + fails under 90% coverage
 composer cs-check        # coding standards
 bin/check-package.sh     # only plugin files are in the package
+composer make-pot        # rebuild the translation template (the version bump changes it); commit it
 ```
 
 (First time? See **Developers** in `README.md` for setup.)
