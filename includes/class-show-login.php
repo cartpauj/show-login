@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Main Plugin Class
  *
@@ -22,7 +23,7 @@ class Show_Login {
      *
      * @var string
      */
-    const VERSION = '1.0.0';
+    public const VERSION = '1.0.0';
 
     /**
      * Singleton instance
@@ -110,6 +111,8 @@ class Show_Login {
         require_once $this->plugin_path . 'includes/class-show-login-popup.php';
         require_once $this->plugin_path . 'includes/class-show-login-turnstile.php';
         require_once $this->plugin_path . 'includes/class-show-login-two-factor.php';
+        require_once $this->plugin_path . 'includes/class-show-login-social-login.php';
+        require_once $this->plugin_path . 'includes/class-show-login-google.php';
     }
 
     /**
@@ -155,7 +158,7 @@ class Show_Login {
         load_plugin_textdomain(
             'show-login',
             false,
-            dirname(plugin_basename($this->plugin_path)) . '/languages'
+            dirname(plugin_basename($this->plugin_path . 'show-login.php')) . '/languages'
         );
     }
 

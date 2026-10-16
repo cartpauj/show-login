@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Assets Handler
  *
@@ -78,9 +79,11 @@ class Show_Login_Assets {
 
         // Localize script with AJAX URL and suppress flag
         // Nonce and redirectUrl are fetched dynamically via AJAX (cache-compatible)
+        // The Turnstile flag is a site-wide setting, so it is safe in cached pages.
         wp_localize_script('show-login', 'showLoginData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'suppressLoading' => $suppress_loading,
+            'turnstile' => Show_Login_Turnstile::is_turnstile_active(),
         ]);
     }
 
@@ -137,8 +140,9 @@ class Show_Login_Assets {
 
         if (isset($_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI'])) {
             $protocol = is_ssl() ? 'https://' : 'http://';
-            $http_host = wp_unslash($_SERVER['HTTP_HOST']);
-            $request_uri = wp_unslash($_SERVER['REQUEST_URI']);
+            // Sanitized as a whole by esc_url_raw() below.
+            $http_host = wp_unslash($_SERVER['HTTP_HOST']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $request_uri = wp_unslash($_SERVER['REQUEST_URI']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $current_url = esc_url_raw($protocol . $http_host . $request_uri);
         }
 

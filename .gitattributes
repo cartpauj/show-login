@@ -1,0 +1,17 @@
+# Files below are left out of the package Composer/Packagist installs and the
+# GitHub release zip (both are built with `git archive`). They stay in the repo.
+# `bin/check-package.sh` (run in CI) fails if a dev file sneaks into the package.
+
+/.github            export-ignore
+/bin                export-ignore
+/tests              export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/phpunit.xml.dist   export-ignore
+/phpcs.xml.dist     export-ignore
+/package.json       export-ignore
+/package-lock.json  export-ignore
+/RELEASES.md        export-ignore
+
+# Keep line endings consistent.
+* text=auto eol=lf

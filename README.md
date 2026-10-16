@@ -9,6 +9,7 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 - **Cache Compatible** - Works perfectly with all page caching solutions (WP Rocket, LiteSpeed, etc.)
 - **Turnstile Integration** - Automatic integration with [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) plugin for CAPTCHA protection
 - **Two-Factor Authentication** - Automatic integration with [Two Factor](https://wordpress.org/plugins/two-factor/) plugin with seamless redirect flow
+- **Social Login** - Shows the buttons from MemberPress, WishList Member and MemberCore Social Login, and from [Login with Google](https://wordpress.org/plugins/login-with-google/), sending people back to the page they were on
 - **Secure** - Rate limiting, nonce verification, username enumeration prevention, and proper sanitization
 - **Fast UX** - Instant loading spinner with smooth transitions
 - **Accessible** - WCAG compliant with proper ARIA attributes
@@ -24,8 +25,18 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 
 ## Installation
 
-1. Download the plugin files
-2. Upload the `show-login` directory to `/wp-content/plugins/`
+### With Composer
+
+```bash
+composer require cartpauj/show-login
+```
+
+The package is a `wordpress-plugin`, so [composer/installers](https://github.com/composer/installers) puts it in `wp-content/plugins/show-login/`. Then activate it in the WordPress admin.
+
+### By hand
+
+1. Download `show-login-x.y.z.zip` from the [latest GitHub release](https://github.com/cartpauj/show-login/releases/latest)
+2. Upload it in **Plugins → Add New → Upload Plugin** (or unzip it into `/wp-content/plugins/`)
 3. Activate the plugin through the WordPress admin
 4. The plugin works automatically when the URL parameter is present
 
@@ -278,6 +289,46 @@ The Two Factor plugin uses complex interactive forms (TOTP codes, backup codes, 
 - JavaScript automatically redirects to the 2FA form
 - After 2FA completion, user is redirected back to `redirect_to` URL (original page)
 
+## Social Login Integration
+
+Show Login puts social login buttons at the top of the popup, above an "or" divider, when one of these is installed and set up:
+
+| Plugin | Shown when |
+|---|---|
+| MemberPress Social Login, WishList Member Social Login, MemberCore Social Login (Caseproof) | At least one provider is enabled and verified. One button per provider. |
+| [Login with Google](https://wordpress.org/plugins/login-with-google/) (rtCamp) | Its Client ID and Client Secret are set (in settings or with the `WP_GOOGLE_LOGIN_CLIENT_ID` / `WP_GOOGLE_LOGIN_SECRET` constants). |
+
+Nothing to configure. If none of them is set up, the popup looks exactly as before.
+
+**After logging in, people come back to the page they were on** (minus `?sl=1`), just like a password login.
+
+### Good to know
+
+- Social login leaves the page: the user goes to Google (or another provider) and comes back. It doesn't happen inside the popup.
+- If social login fails (for example, the Google account isn't linked to a user on the site), the plugin shows its error on `wp-login.php`, not in the popup.
+- The membership plugin's own login redirect rules still apply afterwards. For example, MemberPress may send a member with an expired subscription to their account page, and WishList Member's "login redirect override" setting takes priority.
+- Each plugin's button stylesheet is loaded on front-end pages for logged-out visitors, because the popup is added after the page loads.
+- On sites using Caseproof's forced Google sign-in (`cspf-force-google-oauth`), staff accounts can't use a password; the popup shows that plugin's message and the Google button above it.
+
+### Adding your own buttons
+
+Anything printed on the `show_login_social_buttons` action shows up in the same spot, with the "or" divider added automatically. You get the URL to send people back to after login:
+
+```php
+add_action('show_login_social_buttons', function ($redirect_url) {
+    printf(
+        '<a class="my-sso-button" href="%s">Log in with Company SSO</a>',
+        esc_url(add_query_arg('return', rawurlencode($redirect_url), 'https://sso.example.com/start'))
+    );
+});
+
+// Hide a built-in integration:
+add_action('plugins_loaded', function () {
+    remove_action('show_login_social_buttons', [Show_Login_Google::class, 'render_button'], 20);
+    remove_action('show_login_social_buttons', [Show_Login_Social_Login::class, 'render_buttons'], 10);
+}, 30);
+```
+
 ## Developer Documentation
 
 ### Hooks & Filters
@@ -498,7 +549,10 @@ show-login/
 │   ├── class-show-login-authenticator.php  # Authentication handler
 │   ├── class-show-login-popup.php          # Popup rendering & AJAX check
 │   ├── class-show-login-rate-limiter.php   # Rate limiting logic
-│   └── class-show-login-turnstile.php      # Cloudflare Turnstile integration
+│   ├── class-show-login-turnstile.php      # Cloudflare Turnstile integration
+│   ├── class-show-login-two-factor.php     # Two Factor integration
+│   ├── class-show-login-social-login.php   # Caseproof Social Login integration
+│   └── class-show-login-google.php         # Login with Google (rtCamp) integration
 ├── assets/
 │   ├── css/
 │   │   └── show-login.css                  # Popup styles + Turnstile styles
@@ -660,6 +714,69 @@ The plugin follows a clean architecture pattern with separation of concerns:
 - Clear transients: `delete_transient('show_login_attempts_*')`
 - Verify IP detection is working correctly
 - Check proxy/CDN configuration
+
+## Developers
+
+Everything you need to work on Show Login itself. (For hooks and filters, see **Developer Documentation** above.)
+
+### Releasing
+
+**Follow [RELEASES.md](RELEASES.md) every time.** It's the step-by-step checklist for bumping the version, tagging, and checking that Packagist and GitHub picked it up.
+
+### Setup
+
+You need PHP 7.4+, Composer, Node 20+, and a local MySQL/MariaDB server.
+
+```bash
+composer install
+npm install
+
+# Download WordPress + its test library into ./tmp and create a test database.
+# WARNING: the database named in DB_NAME is dropped and recreated. Default: show_login_tests.
+DB_USER=root DB_PASS=yourpassword composer tests-install
+
+# Or test against a specific WordPress version:
+DB_USER=root DB_PASS=yourpassword composer tests-install -- 6.9.4
+```
+
+Other settings: `DB_HOST` (default `localhost`, `host:port` works) and `DB_NAME`.
+
+### Running checks
+
+| Command | What it does |
+|---|---|
+| `composer test` | PHP tests (PHPUnit + the WordPress test library) |
+| `composer test:coverage` | PHP tests, then fails if line coverage is under 90%. Needs `pcov` or `xdebug`. |
+| `npm test` | JavaScript tests (Jest + jsdom) |
+| `npm run test:coverage` | JavaScript tests, fails under 90% coverage |
+| `composer cs-check` | Coding standards (PSR-12 + WordPress security sniffs + PHP 7.4 compatibility) |
+| `composer cs-fix` | Auto-fixes what it can |
+| `bin/check-package.sh` | Checks that the package/zip contains only plugin files |
+
+### Test layout
+
+```
+tests/
+├── bootstrap.php          # Loads WordPress test library + the plugin
+├── Framework/             # Base test cases (AjaxTestCase runs admin-ajax endpoints)
+├── Fixtures/              # Stand-ins for the Two Factor and Turnstile plugins
+├── TestCases/             # PHP tests: *Test.php
+└── js/                    # Jest tests for assets/js/show-login.js
+```
+
+The PHP tests never make network calls (`WP_HTTP_BLOCK_EXTERNAL`). Two Factor and Simple Cloudflare Turnstile are replaced by small fakes in `tests/Fixtures/`, so neither plugin needs to be installed.
+
+### Continuous integration
+
+`.github/workflows/tests.yml` runs on every push to `main`, every pull request, and weekly:
+
+- **PHP tests:** PHP 7.4, 8.2 and 8.4 against WordPress nightly, the newest release, and the newest release of the previous major (e.g. 7.1.x and 6.9.x). The WordPress versions are looked up automatically. Nightly failures are reported but don't fail the build.
+- **Coverage:** the PHP 8.4 + newest-WordPress run and the JS run both fail under 90%.
+- **Coding standards**, **composer.json validation**, and the **package contents** check.
+
+### What ships
+
+Composer/Packagist and the GitHub release zip are both built with `git archive`, which skips everything marked `export-ignore` in `.gitattributes` (tests, tooling, CI config, this kind of documentation). If you add a dev-only file or folder, add it there too. `bin/check-package.sh` fails CI if you forget.
 
 ## Contributing
 

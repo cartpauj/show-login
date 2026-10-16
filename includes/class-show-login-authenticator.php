@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Authentication Handler
  *
@@ -108,10 +109,11 @@ class Show_Login_Authenticator {
 
         if ($rate_limit_info['is_limited']) {
             $time_remaining = $rate_limit_info['time_remaining'];
-            $minutes = ceil($time_remaining / 60);
+            // Never say "0 minutes" while the visitor is still locked out.
+            $minutes = max(1, (int) ceil($time_remaining / 60));
 
-            /* translators: %s: number of minutes */
             $message = sprintf(
+                /* translators: %s: number of minutes */
                 _n(
                     'Too many login attempts. Please try again in %s minute.',
                     'Too many login attempts. Please try again in %s minutes.',
@@ -131,9 +133,11 @@ class Show_Login_Authenticator {
      * @return array Credentials array.
      */
     private function get_credentials(): array {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce checked in handle_login_ajax() before this runs.
         $username = isset($_POST['username']) ? sanitize_text_field(wp_unslash($_POST['username'])) : '';
-        $password = isset($_POST['password']) ? wp_unslash($_POST['password']) : '';
+        $password = isset($_POST['password']) ? wp_unslash($_POST['password']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Passwords must not be altered.
         $remember = isset($_POST['remember']) && sanitize_text_field(wp_unslash($_POST['remember'])) === '1';
+        // phpcs:enable
 
         return [
             'user_login' => $username,

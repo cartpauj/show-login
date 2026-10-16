@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Popup Handler
  *
@@ -72,9 +73,13 @@ class Show_Login_Popup {
 
         // Get redirect URL from POST data (current page URL sent from JS)
         // This ensures we redirect to the actual page, not admin-ajax.php
+        // No nonce: this endpoint is what hands out the nonce. The URL is
+        // validated as same-site below.
+        // phpcs:disable WordPress.Security.NonceVerification.Missing
         $redirect_url = !empty($_POST['current_url'])
-            ? sanitize_text_field(wp_unslash($_POST['current_url']))
+            ? esc_url_raw(wp_unslash($_POST['current_url']))
             : $this->assets->get_redirect_url();
+        // phpcs:enable
 
         // Remove popup trigger parameters from redirect URL
         $redirect_url = remove_query_arg(['sl', 'show_login'], $redirect_url);
@@ -85,7 +90,7 @@ class Show_Login_Popup {
         // User is not logged in, return popup HTML and data
         wp_send_json_success([
             'show' => true,
-            'html' => $this->get_popup_html(),
+            'html' => $this->get_popup_html($redirect_url),
             'nonce' => wp_create_nonce('show_login_nonce'),
             'redirectUrl' => $redirect_url,
             'suppressLoading' => $suppress_loading
@@ -95,9 +100,10 @@ class Show_Login_Popup {
     /**
      * Get popup HTML
      *
+     * @param string $redirect_url Where to send the user after login (used by the template).
      * @return string Popup HTML.
      */
-    private function get_popup_html(): string {
+    private function get_popup_html(string $redirect_url): string {
         $template_path = $this->plugin_path . 'templates/popup.php';
 
         if (!file_exists($template_path)) {

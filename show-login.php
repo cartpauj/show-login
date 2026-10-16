@@ -1,7 +1,8 @@
 <?php
+
 /**
  * Plugin Name: Show Login
- * Plugin URI: https://github.com/caseproof/show-login
+ * Plugin URI: https://github.com/cartpauj/show-login
  * Description: A lightweight front-end login popup triggered by ?sl=true, ?sl=1, ?show_login=true, or ?show_login=1 URL parameters
  * Version: 1.0.0
  * Author: Caseproof

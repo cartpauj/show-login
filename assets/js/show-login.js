@@ -64,6 +64,12 @@
      * Load Turnstile API script dynamically
      */
     function loadTurnstileScript(callback) {
+        // Don't load Cloudflare's script on sites that don't use Turnstile
+        if (!showLoginData.turnstile) {
+            callback();
+            return;
+        }
+
         // Check if Turnstile is already loaded
         if (typeof window.turnstile !== 'undefined') {
             callback();

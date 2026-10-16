@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Rate Limiter
  *
@@ -23,11 +24,7 @@ class Show_Login_Rate_Limiter {
      * @return array Array with 'is_limited' boolean and 'time_remaining' in seconds.
      */
     public function is_rate_limited(): array {
-        $ip = $this->get_client_ip();
-        $transient_key = 'show_login_attempts_' . md5($ip);
-        $transient_timeout_key = '_transient_timeout_' . $transient_key;
-
-        $attempts = get_transient($transient_key);
+        $record = $this->get_record();
 
         /**
          * Filter the maximum number of login attempts allowed.
@@ -37,30 +34,11 @@ class Show_Login_Rate_Limiter {
          */
         $max_attempts = apply_filters('show_login_max_attempts', 5);
 
-        $is_limited = $attempts && (int) $attempts >= $max_attempts;
-
-        // Calculate time remaining if limited
-        $time_remaining = 0;
-        if ($is_limited) {
-            global $wpdb;
-            $timeout = $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1",
-                    $transient_timeout_key
-                )
-            );
-
-            if ($timeout) {
-                $time_remaining = (int) $timeout - time();
-                if ($time_remaining < 0) {
-                    $time_remaining = 0;
-                }
-            }
-        }
+        $is_limited = $record['count'] > 0 && $record['count'] >= $max_attempts;
 
         return [
             'is_limited' => $is_limited,
-            'time_remaining' => $time_remaining,
+            'time_remaining' => $is_limited ? max(0, $record['expires'] - time()) : 0,
         ];
     }
 
@@ -68,11 +46,7 @@ class Show_Login_Rate_Limiter {
      * Log a failed login attempt
      */
     public function log_failed_attempt(): void {
-        $ip = $this->get_client_ip();
-        $transient_key = 'show_login_attempts_' . md5($ip);
-        $attempts = get_transient($transient_key);
-
-        $attempts = $attempts ? (int) $attempts + 1 : 1;
+        $record = $this->get_record();
 
         /**
          * Filter the rate limit window in seconds.
@@ -80,18 +54,50 @@ class Show_Login_Rate_Limiter {
          * @since 1.0.0
          * @param int $window Time window in seconds (default: 60 = 1 minute).
          */
-        $window = apply_filters('show_login_rate_limit_window', 60);
+        $window = (int) apply_filters('show_login_rate_limit_window', 60);
 
-        set_transient($transient_key, $attempts, $window);
+        // The expiry is stored with the count because transients have no API for
+        // "when does this expire?" (and it can't be read from wp_options on sites
+        // with a persistent object cache).
+        set_transient($this->get_transient_key(), [
+            'count' => $record['count'] + 1,
+            'expires' => time() + $window,
+        ], $window);
     }
 
     /**
      * Clear failed login attempts for current IP
      */
     public function clear_failed_attempts(): void {
-        $ip = $this->get_client_ip();
-        $transient_key = 'show_login_attempts_' . md5($ip);
-        delete_transient($transient_key);
+        delete_transient($this->get_transient_key());
+    }
+
+    /**
+     * Get the stored attempt record for the current IP
+     *
+     * @return array{count: int, expires: int}
+     */
+    private function get_record(): array {
+        $value = get_transient($this->get_transient_key());
+
+        if (is_array($value)) {
+            return [
+                'count' => (int) ($value['count'] ?? 0),
+                'expires' => (int) ($value['expires'] ?? 0),
+            ];
+        }
+
+        // Plain count saved by 1.0.0; its expiry is unknown.
+        return ['count' => (int) $value, 'expires' => 0];
+    }
+
+    /**
+     * Get the transient key for the current IP
+     *
+     * @return string
+     */
+    private function get_transient_key(): string {
+        return 'show_login_attempts_' . md5($this->get_client_ip());
     }
 
     /**
