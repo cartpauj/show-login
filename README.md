@@ -788,6 +788,17 @@ GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Changelog
 
+### 1.1.0
+- **New:** Social login buttons in the popup for MemberPress, WishList Member and MemberCore Social Login, and [Login with Google](https://wordpress.org/plugins/login-with-google/). After logging in, people return to the page they were on. See **Social Login Integration**.
+- **New:** `show_login_social_buttons` action for adding your own login buttons above the form.
+- **New:** Install with Composer (`composer require cartpauj/show-login`) or download the zip from GitHub releases.
+- **Fix:** Links with special characters (like `%20`) were changed when sending people back after login or two-factor.
+- **Fix:** The lockout message said "try again in 0 minutes" on sites using Redis or Memcached.
+- **Fix:** Cloudflare's Turnstile script no longer loads on sites that don't use Turnstile.
+- **Fix:** Translations couldn't be found because the languages folder path was wrong.
+- **Fix:** Plugin and readme links pointed at the wrong GitHub repository.
+- **Dev:** PHP and JavaScript test suites, CI, coding standards, and a release process (see `RELEASES.md`).
+
 ### 1.0.0
 - Initial release
 - Front-end login popup with URL parameter triggers (`?sl=true`, `?sl=1`, `?show_login=true`, `?show_login=1`)
