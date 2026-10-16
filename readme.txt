@@ -1,10 +1,10 @@
 === Show Login ===
-Contributors: caseproof
+Contributors: cartpauj
 Tags: login, popup, ajax, frontend, modal
 Requires at least: 5.0
-Tested up to: 6.7
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,7 +25,7 @@ Show Login adds a beautiful, accessible login popup to your WordPress site that 
 * **Fully Accessible** - WCAG compliant with proper ARIA attributes
 * **Translation Ready** - Supports internationalization
 * **Developer Friendly** - Extensive hooks for customization
-* **Social Login** - Shows MemberPress / WishList Member / MemberCore Social Login and Login with Google buttons in the popup
+* **Social Login** - Shows MemberPress / WishList Member Social Login and Login with Google buttons in the popup
 * **Well Architected** - Proper separation of concerns with dedicated classes
 
 = How It Works =
@@ -268,10 +268,23 @@ add_filter('show_login_button_text_color', function($color) {
 
 == Upgrade Notice ==
 
+= 1.1.0 =
+Adds social login buttons to the popup (MemberPress / WishList Member Social Login and Login with Google) and fixes several redirect and lockout bugs.
+
 = 1.0.0 =
 Initial release of Show Login. Enjoy seamless front-end login popups!
 
 == Changelog ==
+
+= 1.1.0 =
+* New: Social login buttons in the popup for MemberPress and WishList Member Social Login, and Login with Google. After logging in, people return to the page they were on.
+* New: `show_login_social_buttons` action for adding your own login buttons above the form.
+* New: Install with Composer (`composer require cartpauj/show-login`) or download the zip from GitHub releases.
+* Fix: Links with special characters (like `%20`) were changed when sending people back after login or two-factor.
+* Fix: The lockout message said "try again in 0 minutes" on sites using Redis or Memcached.
+* Fix: Cloudflare's Turnstile script no longer loads on sites that don't use Turnstile.
+* Fix: Translations couldn't be found because the languages folder path was wrong.
+* Fix: Plugin and readme links pointed at the wrong GitHub repository.
 
 = 1.0.0 =
 * Initial release
@@ -334,4 +347,4 @@ Show Login does not collect, store, or transmit any personal data beyond what Wo
 
 == Credits ==
 
-Show Login is developed and maintained by [Caseproof](https://caseproof.com).
+Show Login is developed and maintained by [cartpauj](https://github.com/cartpauj).

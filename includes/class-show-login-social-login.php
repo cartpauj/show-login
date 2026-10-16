@@ -4,7 +4,7 @@
  * Caseproof Social Login Integration
  *
  * Adds the social login buttons from the Caseproof social login add-ons
- * (MemberPress, WishList Member and MemberCore Social Login) to the popup.
+ * (MemberPress and WishList Member Social Login) to the popup.
  *
  * @package ShowLogin
  * @since 1.1.0
@@ -21,14 +21,12 @@ if (!defined('ABSPATH')) {
 class Show_Login_Social_Login {
     /**
      * Functions that return each add-on's social login handler, in priority order.
-     * Each add-on bundles its own (prefixed) copy of caseproof/social-login.
      *
      * @var string[]
      */
     private const HANDLER_FUNCTIONS = [
         'mpslHandlerInstance',   // MemberPress Social Login
         'wlmslHandlerInstance',  // WishList Member Social Login
-        'mcslHandlerInstance',   // MemberCore Social Login
     ];
 
     /**

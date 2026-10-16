@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Caseproof social login integration (MemberPress / WishList Member / MemberCore).
+ * Caseproof social login integration (MemberPress / WishList Member).
  *
  * The add-ons are replaced by tests/Fixtures/social-login.php.
  *
@@ -125,11 +125,23 @@ class SocialLoginTest extends AjaxTestCase
         $this->assertSame([$url], $this->redirect_targets(ob_get_clean()));
     }
 
-    public function testFirstAddonWithProvidersWins(): void
+    public function testMemberPressWinsWhenBothAddonsHaveProviders(): void
+    {
+        $GLOBALS['show_login_test_social']['mpsl']  = new Handler([new Provider('google', 'Google')]);
+        $GLOBALS['show_login_test_social']['wlmsl'] = new Handler([new Provider('google', 'Google', true, true, 'wishlist_member')]);
+
+        ob_start();
+        Show_Login_Social_Login::render_buttons(home_url('/'));
+        $html = ob_get_clean();
+
+        $this->assertSame(1, substr_count($html, 'cspfsl-social-login-btn'));
+        $this->assertStringContainsString('memberpress-social-login-request=google', $html);
+    }
+
+    public function testFallsThroughToAnAddonThatHasProviders(): void
     {
         $GLOBALS['show_login_test_social']['mpsl']  = new Handler([]);
         $GLOBALS['show_login_test_social']['wlmsl'] = new Handler([new Provider('google', 'Google', true, true, 'wishlist_member')]);
-        $GLOBALS['show_login_test_social']['mcsl']  = new Handler([new Provider('google', 'Google', true, true, 'membercore')]);
 
         ob_start();
         Show_Login_Social_Login::render_buttons(home_url('/'));
