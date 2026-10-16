@@ -809,6 +809,11 @@ GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Changelog
 
+### 1.1.1
+- **Fix:** The popup's status and error messages ("Checking login status...", "You're not logged in", and others) were always in English. They can now be translated.
+- **New:** Works with [Loco Translate](https://wordpress.org/plugins/loco-translate/) out of the box. See **Translations**.
+- **Dev:** Translation template (`languages/show-login.pot`), `composer make-pot`, and a CI check that the template is up to date.
+
 ### 1.1.0
 - **New:** Social login buttons in the popup for MemberPress and WishList Member Social Login, and [Login with Google](https://wordpress.org/plugins/login-with-google/). After logging in, people return to the page they were on. See **Social Login Integration**.
 - **New:** `show_login_social_buttons` action for adding your own login buttons above the form.
