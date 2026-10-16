@@ -110,7 +110,10 @@ jobs:
       - name: Translation template is up to date (run `composer make-pot` if this fails)
         run: |
           composer make-pot
-          git diff --exit-code -I 'POT-Creation-Date' languages/
+          if ! git diff --exit-code -I 'POT-Creation-Date' languages/; then
+            echo "::error file=languages/show-login.pot::Translatable text changed. Run 'composer make-pot' and commit languages/show-login.pot."
+            exit 1
+          fi
 
   package:
     name: Package contents
