@@ -1,13 +1,10 @@
 name: Tests
 
+# Runs on pull requests only. Every change reaches main through a PR (see RELEASES.md).
+# "Run workflow" on the Actions tab runs it by hand, e.g. to check a new WordPress release.
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
-  schedule:
-    # Weekly, so a new WordPress release or nightly break shows up even when nobody pushes.
-    - cron: '0 22 * * 0'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

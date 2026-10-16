@@ -25,14 +25,15 @@ We use [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 
 ## Release checklist
 
-### 1. Start from a green `main`
+### 1. Start a release branch from `main`
+
+Every change goes through a pull request, because that's where the tests run.
 
 ```bash
 git checkout main
 git pull
+git checkout -b release-1.2.0
 ```
-
-Make sure the latest **Tests** run on GitHub is green.
 
 ### 2. Bump the version in all four places
 
@@ -68,19 +69,22 @@ bin/check-package.sh     # only plugin files are in the package
 
 (First time? See **Developers** in `README.md` for setup.)
 
-### 5. Commit and push
+### 5. Open a pull request and merge it
 
 ```bash
 git add -A
 git commit -m "Release 1.2.0"
-git push origin main
+git push -u origin release-1.2.0
+gh pr create --title "Release 1.2.0" --body "Version bump and changelog."
 ```
 
-Wait for the **Tests** run on that commit to go green.
+Wait for every check on the PR to go green, then merge it on GitHub.
 
 ### 6. Tag and push the tag
 
 ```bash
+git checkout main
+git pull
 git tag -a v1.2.0 -m "Show Login 1.2.0"
 git push origin v1.2.0
 ```
@@ -111,7 +115,7 @@ composer update cartpauj/show-login
 ```bash
 git tag -d v1.2.0
 git push origin :refs/tags/v1.2.0
-# fix, commit, push, then repeat step 6
+# fix it in a new PR, merge, then repeat step 6
 ```
 
 **A bad release already went out.** Don't move or delete the tag. Packagist and anyone who already installed it would get confused. Fix the problem and ship the next PATCH version (`1.2.1`).

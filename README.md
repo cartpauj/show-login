@@ -767,7 +767,7 @@ The PHP tests never make network calls (`WP_HTTP_BLOCK_EXTERNAL`). Two Factor an
 
 ### Continuous integration
 
-`.github/workflows/tests.yml` runs on every push to `main`, every pull request, and weekly:
+`.github/workflows/tests.yml` runs on every pull request (and by hand from the Actions tab):
 
 - **PHP tests:** PHP 7.4, 8.2 and 8.4 against WordPress nightly, the newest release, and the newest release of the previous major (e.g. 7.1.x and 6.9.x). The WordPress versions are looked up automatically. Nightly failures are reported but don't fail the build.
 - **Coverage:** the PHP 8.4 + newest-WordPress run and the JS run both fail under 90%.
