@@ -779,7 +779,7 @@ Composer/Packagist and the GitHub release zip are both built with `git archive`,
 
 ## Contributing
 
-This plugin is maintained by [Caseproof](https://caseproof.com).
+This plugin is maintained by [cartpauj](https://github.com/cartpauj). Issues and pull requests are welcome on [GitHub](https://github.com/cartpauj/show-login).
 
 ## License
 

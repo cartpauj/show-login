@@ -1,5 +1,5 @@
 === Show Login ===
-Contributors: caseproof
+Contributors: cartpauj
 Tags: login, popup, ajax, frontend, modal
 Requires at least: 5.0
 Tested up to: 7.1
@@ -347,4 +347,4 @@ Show Login does not collect, store, or transmit any personal data beyond what Wo
 
 == Credits ==
 
-Show Login is developed and maintained by [Caseproof](https://caseproof.com).
+Show Login is developed and maintained by [cartpauj](https://github.com/cartpauj).
