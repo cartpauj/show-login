@@ -308,7 +308,6 @@ Nothing to configure. If none of them is set up, the popup looks exactly as befo
 - If social login fails (for example, the Google account isn't linked to a user on the site), the plugin shows its error on `wp-login.php`, not in the popup.
 - The membership plugin's own login redirect rules still apply afterwards. For example, MemberPress may send a member with an expired subscription to their account page, and WishList Member's "login redirect override" setting takes priority.
 - Each plugin's button stylesheet is loaded on front-end pages for logged-out visitors, because the popup is added after the page loads.
-- On sites using Caseproof's forced Google sign-in (`cspf-force-google-oauth`), staff accounts can't use a password; the popup shows that plugin's message and the Google button above it.
 
 ### Adding your own buttons
 

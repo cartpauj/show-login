@@ -21,7 +21,6 @@ if (!defined('ABSPATH')) {
 class Show_Login_Social_Login {
     /**
      * Functions that return each add-on's social login handler, in priority order.
-     * Each add-on bundles its own (prefixed) copy of caseproof/social-login.
      *
      * @var string[]
      */

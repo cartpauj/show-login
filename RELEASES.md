@@ -19,7 +19,7 @@ We use [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 | New feature, new hook or filter | MINOR | 1.2.1 → 1.3.0 |
 | Anything that can break a site or an add-on | MAJOR | 1.3.0 → 2.0.0 |
 
-**Hooks and filters are public API.** Other plugins (like Caseproof's add-on) build on them. Renaming or removing a hook, changing its arguments, or changing what a filter's return value means is a **MAJOR** change.
+**Hooks and filters are public API.** Other plugins build on them. Renaming or removing a hook, changing its arguments, or changing what a filter's return value means is a **MAJOR** change.
 
 ---
 
@@ -96,7 +96,7 @@ Always use the `v` prefix and all three numbers (`v1.2.0`, not `1.2` or `v1.2`).
 
 ### 8. Tell the people who use it
 
-Let Caseproof know the new version is out. They update with:
+Let anyone using it know the new version is out. Composer sites update with:
 
 ```bash
 composer update cartpauj/show-login
