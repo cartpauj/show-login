@@ -107,7 +107,19 @@ jobs:
           tools: composer:v2
       - run: composer update --no-interaction --no-progress
       - run: composer cs-check
-      - name: Translation template is up to date (run `composer make-pot` if this fails)
+
+  pot:
+    name: Translation template (run `composer make-pot` if this fails)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+          tools: composer:v2
+      - run: composer update --no-interaction --no-progress
+      - name: languages/show-login.pot matches the code
         run: |
           composer make-pot
           if ! git diff --exit-code -I 'POT-Creation-Date' -I 'X-Generator' -I '^# Copyright' languages/; then
