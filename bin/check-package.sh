@@ -17,7 +17,7 @@ echo "$files" | sed 's/^/  /'
 
 # Must ship.
 missing=0
-for required in show-login.php readme.txt LICENSE composer.json includes/class-show-login.php templates/popup.php assets/js/show-login.js assets/css/show-login.css; do
+for required in show-login.php readme.txt LICENSE composer.json includes/class-show-login.php templates/popup.php assets/js/show-login.js assets/css/show-login.css loco.xml languages/show-login.pot; do
 	if ! grep -qx "$required" <<< "$files"; then
 		echo "MISSING: $required" >&2
 		missing=1

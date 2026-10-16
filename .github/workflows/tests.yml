@@ -107,6 +107,10 @@ jobs:
           tools: composer:v2
       - run: composer update --no-interaction --no-progress
       - run: composer cs-check
+      - name: Translation template is up to date (run `composer make-pot` if this fails)
+        run: |
+          composer make-pot
+          git diff --exit-code -I 'POT-Creation-Date' languages/
 
   package:
     name: Package contents

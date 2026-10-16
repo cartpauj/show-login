@@ -63,10 +63,14 @@ class Show_Login_Assets {
         wp_enqueue_script(
             'show-login',
             $this->plugin_url . 'assets/js/show-login.js',
-            [],
+            ['wp-i18n'],
             $this->version,
             true
         );
+
+        // Load the script's translations. They live in wp-content/languages/ (where Loco Translate
+        // saves them), never in the plugin folder, so plugin updates don't wipe them.
+        wp_set_script_translations('show-login', 'show-login');
 
         /**
          * Filter to suppress loading spinner and status messages.

@@ -42,6 +42,14 @@ const loggedIn = () => json({ success: true, data: { show: false, reason: 'alrea
 
 const $ = (selector) => document.querySelector(selector);
 
+// Stands in for wp.i18n.__ (WordPress loads the real one as the wp-i18n dependency).
+// Returns the English text unless a test sets a translation.
+let translations = {};
+const translate = (text, domain) => {
+    expect(domain).toBe('show-login');
+    return translations[text] ?? text;
+};
+
 const originalLocation = window.location;
 let listeners;
 
@@ -59,6 +67,7 @@ function setUrl(search) {
 function boot({ search = '?sl=1', suppressLoading = false, turnstile = false, holdScript = false } = {}) {
     setUrl(search);
     window.showLoginData = { ajaxUrl: '/wp-admin/admin-ajax.php', suppressLoading, turnstile };
+    window.wp = { i18n: { __: translate } };
     jest.isolateModules(() => {
         require(SCRIPT);
     });
@@ -96,6 +105,7 @@ beforeEach(() => {
     delete window.turnstile;
     delete window.showLoginTurnstileCallback;
     global.fetch = jest.fn();
+    translations = {};
 
     // Track listeners the script adds to document so each test starts clean.
     listeners = [];
@@ -643,5 +653,27 @@ describe('Turnstile', () => {
         boot({ search: '' });
 
         expect(() => window.showLoginTurnstileCallback()).not.toThrow();
+    });
+});
+
+describe('translations', () => {
+    test('status messages use the translated text from wp.i18n', () => {
+        translations = {
+            'Checking login status...': 'Anmeldestatus wird geprüft...',
+        };
+        global.fetch.mockReturnValue(new Promise(() => {}));
+
+        boot();
+
+        expect($('.show-login-loading-state').textContent).toContain('Anmeldestatus wird geprüft...');
+    });
+
+    test('form errors use the translated text from wp.i18n', async () => {
+        translations = { 'Please enter both username and password.': 'Bitte Benutzername und Passwort eingeben.' };
+        await bootToForm();
+
+        fillAndSubmit({ password: '' });
+
+        expect($('#show-login-error').textContent).toBe('Bitte Benutzername und Passwort eingeben.');
     });
 });

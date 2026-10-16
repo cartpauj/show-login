@@ -1,0 +1,128 @@
+# Copyright (C) 2026 cartpauj
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Show Login 1.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/cartpauj/show-login/issues\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-16T18:27:15+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: show-login\n"
+
+#. Plugin Name of the plugin
+#: show-login.php:4
+msgid "Show Login"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: show-login.php:5
+msgid "https://github.com/cartpauj/show-login"
+msgstr ""
+
+#. Description of the plugin
+#: show-login.php:6
+msgid "A lightweight front-end login popup triggered by ?sl=true, ?sl=1, ?show_login=true, or ?show_login=1 URL parameters"
+msgstr ""
+
+#. Author of the plugin
+#: show-login.php:8
+msgid "cartpauj"
+msgstr ""
+
+#. Author URI of the plugin
+#: show-login.php:9
+msgid "https://github.com/cartpauj"
+msgstr ""
+
+#: includes/class-show-login-authenticator.php:52
+#: assets/js/show-login.js:344
+msgid "Please enter both username and password."
+msgstr ""
+
+#. translators: %s: number of minutes
+#: includes/class-show-login-authenticator.php:117
+#, php-format
+msgid "Too many login attempts. Please try again in %s minute."
+msgid_plural "Too many login attempts. Please try again in %s minutes."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-show-login-authenticator.php:191
+msgid "Login successful! Redirecting..."
+msgstr ""
+
+#: includes/class-show-login-authenticator.php:213
+msgid "<strong>Error:</strong> Invalid username or password."
+msgstr ""
+
+#. translators: %s: login provider name, e.g. Google
+#: includes/class-show-login-social-login.php:110
+#, php-format
+msgid "Log in with %s"
+msgstr ""
+
+#: includes/class-show-login-turnstile.php:136
+msgid "Turnstile validation is not available."
+msgstr ""
+
+#: includes/class-show-login-turnstile.php:146
+msgid "Please verify you are human."
+msgstr ""
+
+#: includes/class-show-login-two-factor.php:83
+msgid "Failed to create two-factor authentication token."
+msgstr ""
+
+#: includes/class-show-login-two-factor.php:105
+msgid "Redirecting to two-factor authentication..."
+msgstr ""
+
+#: templates/popup.php:20
+msgid "Close"
+msgstr ""
+
+#: templates/popup.php:22
+#: templates/popup.php:121
+msgid "Log In"
+msgstr ""
+
+#: templates/popup.php:55
+msgid "or"
+msgstr ""
+
+#: templates/popup.php:71
+msgid "Username or Email"
+msgstr ""
+
+#: templates/popup.php:85
+msgid "Password"
+msgstr ""
+
+#: templates/popup.php:105
+msgid "Remember Me"
+msgstr ""
+
+#: assets/js/show-login.js:58
+msgid "Checking login status..."
+msgstr ""
+
+#: assets/js/show-login.js:167
+msgid "You're already logged in!"
+msgstr ""
+
+#: assets/js/show-login.js:216
+msgid "You're not logged in"
+msgstr ""
+
+#: assets/js/show-login.js:434
+msgid "Login failed. Please try again."
+msgstr ""
+
+#: assets/js/show-login.js:443
+msgid "An error occurred. Please try again."
+msgstr ""
