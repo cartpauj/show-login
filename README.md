@@ -765,6 +765,14 @@ GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Changelog
 
+### 1.2.0
+- **Breaking:** The built-in login attempt limit is gone. It could be tricked with fake IP addresses and used to lock real people out. Use a security plugin like Wordfence, Limit Login Attempts Reloaded, or Solid Security instead. It protects the popup automatically. The `show_login_enable_rate_limiting`, `show_login_max_attempts`, `show_login_rate_limit_window`, and `show_login_client_ip` filters no longer do anything.
+- **Fix:** The `show_login_redirect_url` filter now works. Before, it never ran in the popup.
+- **Fix:** Opening the popup no longer makes your server wait a second for every visitor. The spinner still shows for at least a second, but the browser handles it.
+- **Fix:** If the server sends back a broken reply, the spinner closes instead of getting stuck.
+- **Security:** After two-factor login, people can only be sent to pages on your site.
+- **Security:** Error messages from other plugins are cleaned up before the popup shows them, so they can't run scripts.
+
 ### 1.1.1
 - **Fix:** The popup's status and error messages ("Checking login status...", "You're not logged in", and others) were always in English. They can now be translated.
 - **New:** Works with [Loco Translate](https://wordpress.org/plugins/loco-translate/) out of the box. See **Translations**.
