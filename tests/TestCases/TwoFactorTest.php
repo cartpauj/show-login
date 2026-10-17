@@ -23,8 +23,7 @@ class TwoFactorTest extends AjaxTestCase
     public function set_up(): void
     {
         parent::set_up();
-        $_SERVER['REMOTE_ADDR'] = '203.0.113.40';
-        $this->user             = $this->make_user();
+        $this->user = $this->make_user();
 
         // What the real Two Factor plugin hooks in.
         add_action('wp_login', [Two_Factor_Core::class, 'wp_login'], 10, 2);
@@ -88,6 +87,18 @@ class TwoFactorTest extends AjaxTestCase
 
         parse_str(wp_parse_url($response['data']['redirect_url'], PHP_URL_QUERY), $query);
         $this->assertSame(home_url('/search/?q=a%20b'), $query['redirect_to']);
+    }
+
+    public function testOffSiteRedirectFallsBackToTheDashboard(): void
+    {
+        Two_Factor_Core::$users_with_2fa = [$this->user->ID];
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', [
+            'redirect_to' => 'https://evil.example/',
+        ]));
+
+        parse_str(wp_parse_url($response['data']['redirect_url'], PHP_URL_QUERY), $query);
+        $this->assertSame(admin_url(), $query['redirect_to']);
     }
 
     public function testRedirectDefaultsToTheDashboard(): void

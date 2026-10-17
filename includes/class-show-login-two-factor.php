@@ -84,10 +84,11 @@ class Show_Login_Two_Factor {
             ], 500);
         }
 
-        // Get redirect URL from POST data (where user should go after successful 2FA)
+        // Get redirect URL from POST data (where user should go after successful 2FA),
+        // kept same-site to prevent open redirects
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified before wp_signon() fired this hook.
         $redirect_to = !empty($_POST['redirect_to'])
-            ? esc_url_raw(wp_unslash($_POST['redirect_to']))
+            ? wp_validate_redirect(esc_url_raw(wp_unslash($_POST['redirect_to'])), admin_url())
             : admin_url();
         // phpcs:enable
 

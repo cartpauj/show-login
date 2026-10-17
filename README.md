@@ -10,7 +10,7 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 - **Turnstile Integration** - Automatic integration with [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) plugin for CAPTCHA protection
 - **Two-Factor Authentication** - Automatic integration with [Two Factor](https://wordpress.org/plugins/two-factor/) plugin with seamless redirect flow
 - **Social Login** - Shows the buttons from MemberPress and WishList Member Social Login, and from [Login with Google](https://wordpress.org/plugins/login-with-google/), sending people back to the page they were on
-- **Secure** - Rate limiting, nonce verification, username enumeration prevention, and proper sanitization
+- **Secure** - Nonce verification, username enumeration prevention, and proper sanitization. Works with your security plugin for login limits
 - **Fast UX** - Instant loading spinner with smooth transitions
 - **Accessible** - WCAG compliant with proper ARIA attributes
 - **Extensible** - Multiple hooks for custom authentication flows and customization
@@ -83,28 +83,11 @@ When a user successfully logs in:
 
 ## Security Features
 
-### Rate Limiting
+### Login Limits (Brute-Force Protection)
 
-Built-in IP-based rate limiting prevents brute-force attacks:
-- Default: 5 attempts per 1 minute
-- Uses WordPress transients for storage
-- Clears on successful login
-- Supports proxy/CDN headers (Cloudflare, X-Forwarded-For, etc.)
-- Shows dynamic countdown in error message
+Show Login doesn't limit login attempts itself. That's a job for a security plugin like Wordfence, Limit Login Attempts Reloaded, or Solid Security. The popup logs people in through WordPress's own `wp_signon()`, so those plugins see and block popup logins exactly like logins on wp-login.php.
 
-Customize via filters:
-
-```php
-// Change max attempts
-add_filter('show_login_max_attempts', function($max) {
-    return 10; // Allow 10 attempts
-});
-
-// Change time window (in seconds)
-add_filter('show_login_rate_limit_window', function($window) {
-    return 3600; // 1 hour window (default: 60 = 1 minute)
-});
-```
+> **Removed:** The built-in rate limiter is gone, along with the `show_login_enable_rate_limiting`, `show_login_max_attempts`, `show_login_rate_limit_window`, and `show_login_client_ip` filters. It trusted IP headers that visitors can fake, so it could be bypassed, and it could be used to lock real people out.
 
 ### Nonce Verification
 
@@ -124,6 +107,14 @@ Error messages are sanitized to prevent username enumeration attacks:
 - Specific error codes (`invalid_username`, `invalid_email`, `incorrect_password`) are replaced with generic messages
 - Prevents attackers from determining which usernames exist on the site
 
+### Error Message Filtering
+
+Other errors (for example from a membership plugin) are passed through, but only simple HTML is kept: `<strong>`, `<b>`, `<em>`, `<i>`, `<br>`, and links. Anything else, like scripts or event handlers, is stripped. This runs before the `show_login_error_message` filter, so whatever your filter returns is shown as-is. Escape anything you add there.
+
+### Safe Redirects
+
+Every redirect URL, including the one passed to the two-factor form, must stay on your site. Off-site URLs are replaced with a safe default.
+
 ### Page Caching Compatibility
 
 The plugin is fully compatible with all page caching solutions:
@@ -136,6 +127,7 @@ The plugin is fully compatible with all page caching solutions:
   - "Checking login status..." (during AJAX)
   - "You're not logged in" (if logged out, shows 1 second before form)
   - "You're already logged in!" (if logged in, shows 1 second before closing)
+  - The spinner stays up for at least 1 second so it doesn't flash. The browser handles this wait, so the server never sits idle
 
 ## Cloudflare Turnstile Integration
 
@@ -476,28 +468,6 @@ add_filter('show_login_button_text_color', function($color) {
 add_filter('show_login_suppress_loading_state', '__return_true');
 ```
 
-**Rate Limiting:**
-```php
-// Disable rate limiting completely
-add_filter('show_login_enable_rate_limiting', '__return_false');
-
-// Change max attempts
-add_filter('show_login_max_attempts', function($max) {
-    return 10; // Default: 5
-});
-
-// Change time window (in seconds)
-add_filter('show_login_rate_limit_window', function($window) {
-    return 1800; // 30 minutes (default: 60 = 1 minute)
-});
-
-// Override IP detection
-add_filter('show_login_client_ip', function($ip) {
-    // Use custom IP detection
-    return $_SERVER['CUSTOM_IP_HEADER'] ?? $ip;
-});
-```
-
 ### Custom Authentication Flows
 
 For custom authentication requirements beyond the built-in Two Factor plugin integration, you can use the authentication hooks:
@@ -564,7 +534,6 @@ show-login/
 │   ├── class-show-login-assets.php         # Asset management
 │   ├── class-show-login-authenticator.php  # Authentication handler
 │   ├── class-show-login-popup.php          # Popup rendering & AJAX check
-│   ├── class-show-login-rate-limiter.php   # Rate limiting logic
 │   ├── class-show-login-turnstile.php      # Cloudflare Turnstile integration
 │   ├── class-show-login-two-factor.php     # Two Factor integration
 │   ├── class-show-login-social-login.php   # Caseproof Social Login integration
@@ -604,12 +573,6 @@ The plugin follows a clean architecture pattern with separation of concerns:
 - Validates credentials
 - Handles authentication success/failure
 - Sanitizes error messages to prevent username enumeration
-
-**Rate Limiter (`Show_Login_Rate_Limiter`)**
-- IP-based rate limiting
-- Transient storage for attempt tracking
-- Configurable thresholds and windows
-- CDN/proxy header support
 
 **Popup Handler (`Show_Login_Popup`)**
 - AJAX endpoint for login status check (cache-compatible)
@@ -655,12 +618,12 @@ The plugin follows a clean architecture pattern with separation of concerns:
    ↓
 11. User submits form → AJAX request (show_login_authenticate)
    ↓
-12. PHP: Rate limit check → Nonce verification → Turnstile validation → Sanitization
+12. PHP: Nonce verification → Sanitization → Turnstile validation
    ↓
 13. Before hooks fire → wp_signon() → After hooks fire
    ↓
-14. Success: Clear rate limit → Return success JSON
-    Failure: Log attempt → Return error JSON
+14. Success: Return success JSON
+    Failure: Return error JSON (security plugins see it via wp_login_failed)
    ↓
 15. JavaScript: Success → window.location.href = redirectUrl
                Failure → Show error in popup
@@ -685,7 +648,6 @@ The plugin follows a clean architecture pattern with separation of concerns:
 
 - Assets only load when needed (logged-out users with `?sl=true`)
 - Inline CSS/JS eliminates HTTP requests
-- Rate limiting uses efficient transients
 - No database queries on every page load
 
 ### Security Recommendations
@@ -693,9 +655,9 @@ The plugin follows a clean architecture pattern with separation of concerns:
 1. Always use HTTPS in production
 2. Install [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) for CAPTCHA protection (see Cloudflare Turnstile Integration section)
 3. Install [Two Factor](https://wordpress.org/plugins/two-factor/) plugin for 2FA support (see Two-Factor Authentication Integration section)
-4. Monitor failed login attempts using action hooks
-5. Keep WordPress and plugins updated
-6. Consider lowering rate limit thresholds for high-security sites
+4. Install a security plugin (Wordfence, Limit Login Attempts Reloaded, Solid Security, etc.) to limit login attempts. It covers the popup automatically
+5. Monitor failed login attempts using action hooks
+6. Keep WordPress and plugins updated
 
 ## Troubleshooting
 
@@ -727,12 +689,6 @@ The plugin follows a clean architecture pattern with separation of concerns:
 - Check for JavaScript errors in console
 - Verify `showLoginData.redirectUrl` is correct
 - Check for conflicting plugins that modify redirects
-
-### Rate limiting issues
-
-- Clear transients: `delete_transient('show_login_attempts_*')`
-- Verify IP detection is working correctly
-- Check proxy/CDN configuration
 
 ## Developers
 

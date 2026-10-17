@@ -57,10 +57,8 @@ class Show_Login_Popup {
          */
         $suppress_loading = apply_filters('show_login_suppress_loading_state', false);
 
-        // Only add delay if loading state is being shown (prevents flash if AJAX is too fast)
-        if (!$suppress_loading) {
-            sleep(1);
-        }
+        // No delay here: the browser keeps the spinner up long enough not to flash.
+        // Sleeping would tie up a server worker on every anonymous request.
 
         // Check if user is already logged in
         if (is_user_logged_in()) {
@@ -74,18 +72,14 @@ class Show_Login_Popup {
         // Get redirect URL from POST data (current page URL sent from JS)
         // This ensures we redirect to the actual page, not admin-ajax.php
         // No nonce: this endpoint is what hands out the nonce. The URL is
-        // validated as same-site below.
+        // validated as same-site by get_redirect_url().
         // phpcs:disable WordPress.Security.NonceVerification.Missing
-        $redirect_url = !empty($_POST['current_url'])
+        $current_url = !empty($_POST['current_url'])
             ? esc_url_raw(wp_unslash($_POST['current_url']))
-            : $this->assets->get_redirect_url();
+            : null;
         // phpcs:enable
 
-        // Remove popup trigger parameters from redirect URL
-        $redirect_url = remove_query_arg(['sl', 'show_login'], $redirect_url);
-
-        // Validate redirect URL to prevent open redirects (must be internal)
-        $redirect_url = wp_validate_redirect($redirect_url, home_url());
+        $redirect_url = $this->assets->get_redirect_url($current_url);
 
         // User is not logged in, return popup HTML and data
         wp_send_json_success([

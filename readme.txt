@@ -21,7 +21,7 @@ Show Login adds a beautiful, accessible login popup to your WordPress site that 
 * **Cache Compatible** - Works perfectly with all page caching solutions
 * **Seamless Experience** - Users log in without leaving the page
 * **Instant Feedback** - Loading spinner appears immediately, smooth transitions
-* **Secure by Default** - Built-in rate limiting and security features
+* **Secure by Default** - Nonce checks, safe redirects, and no username fishing. Works with your security plugin for login limits
 * **Fully Accessible** - WCAG compliant with proper ARIA attributes
 * **Translation Ready** - Every message can be translated, and it works with Loco Translate out of the box
 * **Developer Friendly** - Extensive hooks for customization
@@ -49,12 +49,12 @@ When a user visits the URL, they'll see an instant loading popup that checks the
 
 = Security Features =
 
-* **Rate Limiting** - Prevents brute-force attacks (5 attempts per 1 minute by default)
 * **Nonce Verification** - All requests are validated
 * **Proper Sanitization** - All inputs are cleaned and validated
 * **WordPress Authentication** - Uses core WordPress login functions
 * **Cache Compatible** - Login status checked via AJAX, never cached
 * **Username Enumeration Protection** - Generic error messages prevent user discovery
+* **Works With Security Plugins** - Wordfence, Limit Login Attempts Reloaded, Solid Security and similar plugins limit popup logins just like wp-login.php
 
 = Developer Features =
 
@@ -65,7 +65,6 @@ Show Login provides numerous hooks and filters for developers:
 * Modify the redirect behavior
 * Add custom fields to the form
 * Integrate with other authentication systems
-* Customize rate limiting settings
 
 See the [GitHub repository](https://github.com/cartpauj/show-login) for full developer documentation.
 
@@ -128,28 +127,11 @@ See the FAQ section for more examples or check the developer documentation.
 
 Yes! The plugin provides hooks that allow you to add 2FA fields and verification. See the developer documentation for examples.
 
-= How does rate limiting work? =
+= Does it limit login attempts? =
 
-The plugin limits login attempts to 5 per 1 minute per IP address by default. This prevents brute-force attacks. Failed attempts are tracked and cleared upon successful login. The error message shows how long until you can try again.
+Not by itself. Use a security plugin such as Wordfence, Limit Login Attempts Reloaded, or Solid Security. The popup logs people in through WordPress's own login function, so those plugins protect it automatically, just like wp-login.php.
 
-= Can I change the rate limit settings? =
-
-Yes, developers can use filters to customize rate limiting:
-
-`
-// Disable rate limiting completely
-add_filter('show_login_enable_rate_limiting', '__return_false');
-
-// Allow 10 attempts
-add_filter('show_login_max_attempts', function($max) {
-    return 10;
-});
-
-// Change window to 30 minutes (default is 60 seconds)
-add_filter('show_login_rate_limit_window', function($window) {
-    return 1800; // 30 minutes in seconds
-});
-`
+Older versions had a built-in rate limiter. It was removed because it trusted IP headers visitors can fake, so it could be bypassed and used to lock real people out. Its filters (`show_login_enable_rate_limiting`, `show_login_max_attempts`, `show_login_rate_limit_window`, `show_login_client_ip`) no longer do anything.
 
 = Is the popup mobile-friendly? =
 
@@ -336,10 +318,6 @@ Show Login provides extensive hooks for customization and integration.
 * `show_login_error_message` - Customize error messages
 * `show_login_redirect_url` - Modify redirect destination
 * `show_login_suppress_loading_state` - Suppress loading spinner and status messages
-* `show_login_enable_rate_limiting` - Enable or disable rate limiting
-* `show_login_max_attempts` - Adjust rate limit threshold
-* `show_login_rate_limit_window` - Adjust rate limit window
-* `show_login_client_ip` - Override IP detection
 
 For complete developer documentation, examples, and code snippets, visit the [GitHub repository](https://github.com/cartpauj/show-login).
 
@@ -351,7 +329,7 @@ Show Login does not collect, store, or transmit any personal data beyond what Wo
 * Does not track users
 * Does not send data to external services
 * Does not store any information in external databases
-* Uses WordPress transients to temporarily store rate limiting data (IP addresses are hashed)
+* Does not store IP addresses
 
 == Credits ==
 

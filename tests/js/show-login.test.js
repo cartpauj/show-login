@@ -175,7 +175,7 @@ describe('checking login status', () => {
         global.fetch.mockResolvedValue(loggedIn());
 
         boot();
-        await jest.advanceTimersByTimeAsync(0);
+        await jest.advanceTimersByTimeAsync(1000);
 
         expect($('.show-login-loading-state').textContent).toContain("You're already logged in!");
 
@@ -199,7 +199,7 @@ describe('checking login status', () => {
         global.fetch.mockResolvedValue(json({ success: false, data: {} }));
 
         boot();
-        await jest.advanceTimersByTimeAsync(0);
+        await jest.advanceTimersByTimeAsync(1000);
 
         expect($('.show-login-loading-state').textContent).toContain("You're already logged in!");
     });
@@ -208,7 +208,7 @@ describe('checking login status', () => {
         global.fetch.mockResolvedValue(loggedOut());
 
         boot();
-        await jest.advanceTimersByTimeAsync(0);
+        await jest.advanceTimersByTimeAsync(1000);
 
         expect($('.show-login-loading-state').textContent).toContain("You're not logged in");
         expect($('#show-login-form')).toBeNull();
@@ -228,9 +228,33 @@ describe('checking login status', () => {
 
         boot();
         $('#show-login-overlay').remove();
-        await jest.advanceTimersByTimeAsync(1000);
+        await jest.advanceTimersByTimeAsync(2000);
 
         expect($('#show-login-form')).not.toBeNull();
+    });
+
+    test('the spinner stays up for at least a second, even if the server answers at once', async () => {
+        global.fetch.mockResolvedValue(loggedOut());
+
+        boot();
+        await jest.advanceTimersByTimeAsync(999);
+
+        expect($('.show-login-loading-state').textContent).toContain('Checking login status...');
+
+        await jest.advanceTimersByTimeAsync(1);
+        expect($('.show-login-loading-state').textContent).toContain("You're not logged in");
+    });
+
+    test('a slow server adds no extra spinner time', async () => {
+        let respond;
+        global.fetch.mockReturnValue(new Promise((resolve) => { respond = resolve; }));
+
+        boot();
+        await jest.advanceTimersByTimeAsync(1500);
+        respond(loggedOut());
+        await jest.advanceTimersByTimeAsync(0);
+
+        expect($('.show-login-loading-state').textContent).toContain("You're not logged in");
     });
 
     test('logged-out users get the form at once when loading state is suppressed', async () => {
@@ -245,6 +269,15 @@ describe('checking login status', () => {
 
         boot();
         await jest.advanceTimersByTimeAsync(300);
+
+        expect($('#show-login-overlay')).toBeNull();
+    });
+
+    test('a broken response closes the spinner instead of leaving it stuck', async () => {
+        global.fetch.mockResolvedValue(json(null));
+
+        boot();
+        await jest.advanceTimersByTimeAsync(1300);
 
         expect($('#show-login-overlay')).toBeNull();
     });

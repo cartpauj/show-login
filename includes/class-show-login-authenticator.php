@@ -3,7 +3,7 @@
 /**
  * Authentication Handler
  *
- * Handles AJAX login requests, rate limiting, and authentication.
+ * Handles AJAX login requests and authentication.
  *
  * @package ShowLogin
  * @since 1.0.0
@@ -19,28 +19,12 @@ if (!defined('ABSPATH')) {
  */
 class Show_Login_Authenticator {
     /**
-     * Rate limiter instance
-     *
-     * @var Show_Login_Rate_Limiter
-     */
-    private Show_Login_Rate_Limiter $rate_limiter;
-
-    /**
-     * Constructor
-     *
-     * @param Show_Login_Rate_Limiter $rate_limiter Rate limiter instance.
-     */
-    public function __construct(Show_Login_Rate_Limiter $rate_limiter) {
-        $this->rate_limiter = $rate_limiter;
-    }
-
-    /**
      * Handle AJAX login request
+     *
+     * Login limits are left to security plugins, which see these attempts
+     * through wp_signon() like any other login.
      */
     public function handle_login_ajax(): void {
-        // Check rate limiting (if enabled)
-        $this->check_rate_limit();
-
         // Verify nonce
         check_ajax_referer('show_login_nonce', 'nonce', true);
 
@@ -90,44 +74,6 @@ class Show_Login_Authenticator {
     }
 
     /**
-     * Check rate limiting
-     */
-    private function check_rate_limit(): void {
-        /**
-         * Filter to enable/disable rate limiting.
-         *
-         * @since 1.0.0
-         * @param bool $enabled Whether rate limiting is enabled (default: true).
-         */
-        $rate_limiting_enabled = apply_filters('show_login_enable_rate_limiting', true);
-
-        if (!$rate_limiting_enabled) {
-            return;
-        }
-
-        $rate_limit_info = $this->rate_limiter->is_rate_limited();
-
-        if ($rate_limit_info['is_limited']) {
-            $time_remaining = $rate_limit_info['time_remaining'];
-            // Never say "0 minutes" while the visitor is still locked out.
-            $minutes = max(1, (int) ceil($time_remaining / 60));
-
-            $message = sprintf(
-                /* translators: %s: number of minutes */
-                _n(
-                    'Too many login attempts. Please try again in %s minute.',
-                    'Too many login attempts. Please try again in %s minutes.',
-                    $minutes,
-                    'show-login'
-                ),
-                number_format_i18n($minutes)
-            );
-
-            wp_send_json_error(['message' => $message], 429);
-        }
-    }
-
-    /**
      * Get credentials from POST request
      *
      * @return array Credentials array.
@@ -152,9 +98,6 @@ class Show_Login_Authenticator {
      * @param WP_Error $error The error object.
      */
     private function handle_login_failure(WP_Error $error): void {
-        // Log failed attempt for rate limiting
-        $this->rate_limiter->log_failed_attempt();
-
         // Sanitize error message to prevent username enumeration
         $error_message = $this->sanitize_login_error($error);
 
@@ -176,9 +119,6 @@ class Show_Login_Authenticator {
      * @param WP_User $user The user object.
      */
     private function handle_login_success(WP_User $user): void {
-        // Clear failed attempts on successful login
-        $this->rate_limiter->clear_failed_attempts();
-
         /**
          * Fires on successful login.
          *
@@ -221,6 +161,15 @@ class Show_Login_Authenticator {
             $message
         );
 
-        return $message;
+        // Messages from other plugins can carry anything, and the popup shows
+        // them as HTML, so only keep simple formatting and links.
+        return wp_kses($message, [
+            'a' => ['href' => true],
+            'b' => [],
+            'br' => [],
+            'em' => [],
+            'i' => [],
+            'strong' => [],
+        ]);
     }
 }

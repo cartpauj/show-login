@@ -16,13 +16,9 @@ use WPAjaxDieStopException;
 
 class AuthenticatorTest extends AjaxTestCase
 {
-    private const IP = '203.0.113.20';
-
     public function set_up(): void
     {
         parent::set_up();
-        unset($_SERVER['HTTP_CF_CONNECTING_IP'], $_SERVER['HTTP_X_REAL_IP'], $_SERVER['HTTP_X_FORWARDED_FOR']);
-        $_SERVER['REMOTE_ADDR'] = self::IP;
         $this->make_user();
     }
 
@@ -57,15 +53,6 @@ class AuthenticatorTest extends AjaxTestCase
         $this->ajax('show_login_authenticate', $this->login_post());
 
         $this->assertSame(['before:alice', 'after:alice:alice', 'success:alice'], $fired);
-    }
-
-    public function testSuccessClearsFailedAttempts(): void
-    {
-        set_transient('show_login_attempts_' . md5(self::IP), 3, 60);
-
-        $this->ajax('show_login_authenticate', $this->login_post());
-
-        $this->assertFalse(get_transient('show_login_attempts_' . md5(self::IP)));
     }
 
     public function testRememberMeIsPassedToWordPress(): void
@@ -153,13 +140,12 @@ class AuthenticatorTest extends AjaxTestCase
         $this->ajax('show_login_authenticate', $post);
     }
 
-    public function testWrongPasswordGivesAGenericErrorAndCountsTheAttempt(): void
+    public function testWrongPasswordGivesAGenericError(): void
     {
         $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'wrong'));
 
         $this->assertFalse($response['success']);
         $this->assertSame('<strong>Error:</strong> Invalid username or password.', $response['data']['message']);
-        $this->assertSame(1, get_transient('show_login_attempts_' . md5(self::IP))['count']);
     }
 
     /**
@@ -197,6 +183,26 @@ class AuthenticatorTest extends AjaxTestCase
         $this->assertSame('Your account is locked.', $response['data']['message']);
     }
 
+    /**
+     * The popup shows errors as HTML, so another plugin's error must not be able to run script.
+     */
+    public function testOtherErrorsKeepOnlySimpleHtml(): void
+    {
+        add_filter('authenticate', static function () {
+            return new WP_Error(
+                'account_pending',
+                '<strong>Pending:</strong> <img src=x onerror=alert(1)>check <a href="https://example.org/help" onclick="x()">help</a>'
+            );
+        }, 100);
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post());
+
+        $this->assertSame(
+            '<strong>Pending:</strong> check <a href="https://example.org/help">help</a>',
+            $response['data']['message']
+        );
+    }
+
     public function testErrorMessageFilter(): void
     {
         $code = null;
@@ -211,69 +217,23 @@ class AuthenticatorTest extends AjaxTestCase
         $this->assertSame('incorrect_password', $code);
     }
 
-    public function testRateLimitedRequestsGet429WithoutTryingThePassword(): void
+    /**
+     * Login limits are left to security plugins, which hook wp_login_failed and authenticate.
+     */
+    public function testRepeatedFailuresNeverLockOutTheRightPassword(): void
     {
-        set_transient('show_login_attempts_' . md5(self::IP), ['count' => 5, 'expires' => time() + 60], 60);
-        $authenticated = false;
-        add_action('show_login_before_authenticate', static function () use (&$authenticated) {
-            $authenticated = true;
+        $failed = 0;
+        add_action('wp_login_failed', static function () use (&$failed) {
+            $failed++;
         });
 
-        $response = $this->ajax('show_login_authenticate', $this->login_post());
-
-        $this->assertFalse($response['success']);
-        $this->assertSame(429, $this->status);
-        $this->assertSame('Too many login attempts. Please try again in 1 minute.', $response['data']['message']);
-        $this->assertFalse($authenticated);
-    }
-
-    public function testRateLimitMessageUsesPluralMinutes(): void
-    {
-        set_transient('show_login_attempts_' . md5(self::IP), ['count' => 5, 'expires' => time() + 600], 600);
-
-        $response = $this->ajax('show_login_authenticate', $this->login_post());
-
-        $this->assertMatchesRegularExpression('/try again in (9|10) minutes\.$/', $response['data']['message']);
-    }
-
-    /**
-     * Sites with Redis/Memcached keep transients out of wp_options.
-     */
-    public function testLockoutMessageWorksWithAPersistentObjectCache(): void
-    {
-        $was_using = wp_using_ext_object_cache(true);
-        add_filter('show_login_rate_limit_window', static fn() => 600);
-
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $this->ajax('show_login_authenticate', $this->login_post('alice', 'wrong'));
         }
         $response = $this->ajax('show_login_authenticate', $this->login_post());
 
-        wp_using_ext_object_cache($was_using);
-        $this->assertSame(429, $this->status);
-        $this->assertMatchesRegularExpression('/try again in (9|10) minutes\.$/', $response['data']['message']);
-    }
-
-    public function testRateLimitingCanBeDisabled(): void
-    {
-        add_filter('show_login_enable_rate_limiting', '__return_false');
-        set_transient('show_login_attempts_' . md5(self::IP), 50, 60);
-
-        $response = $this->ajax('show_login_authenticate', $this->login_post());
-
+        $this->assertSame(10, $failed, 'Security plugins must see every failed attempt.');
         $this->assertTrue($response['success']);
-    }
-
-    public function testSixthWrongPasswordIsBlocked(): void
-    {
-        for ($i = 0; $i < 5; $i++) {
-            $this->ajax('show_login_authenticate', $this->login_post('alice', 'wrong'));
-        }
-
-        $response = $this->ajax('show_login_authenticate', $this->login_post());
-
-        $this->assertFalse($response['success'], 'Even the right password is refused while locked out.');
-        $this->assertSame(429, $this->status);
     }
 
     public function testLoggedInUsersCannotReachTheEndpoint(): void

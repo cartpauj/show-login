@@ -67,6 +67,46 @@ class PopupTest extends AjaxTestCase
         $this->assertSame(home_url(), $response['data']['redirectUrl']);
     }
 
+    /**
+     * The browser always sends current_url, so the filter must run on that path.
+     */
+    public function testRedirectFilterChangesWhereThePageSendsPeople(): void
+    {
+        $args = null;
+        add_filter('show_login_redirect_url', static function ($redirect, $current) use (&$args) {
+            $args = [$redirect, $current];
+            return home_url('/welcome/');
+        }, 10, 2);
+
+        $response = $this->ajax('show_login_check_popup', ['current_url' => home_url('/shop/?sl=1')]);
+
+        $this->assertSame(home_url('/welcome/'), $response['data']['redirectUrl']);
+        $this->assertSame([home_url('/shop/'), home_url('/shop/?sl=1')], $args);
+    }
+
+    public function testRedirectFilterCannotSendPeopleOffSite(): void
+    {
+        add_filter('show_login_redirect_url', static fn() => 'https://evil.example.com/');
+
+        $response = $this->ajax('show_login_check_popup', ['current_url' => home_url('/shop/')]);
+
+        $this->assertSame(home_url(), $response['data']['redirectUrl']);
+    }
+
+    /**
+     * A junk current_url (only possible from a hand-made request) means "reload this page",
+     * not "go to admin-ajax.php".
+     */
+    public function testUnsafeCurrentUrlMakesThePageReload(): void
+    {
+        $_SERVER['HTTP_HOST']   = wp_parse_url(home_url(), PHP_URL_HOST);
+        $_SERVER['REQUEST_URI'] = '/wp-admin/admin-ajax.php';
+
+        $response = $this->ajax('show_login_check_popup', ['current_url' => 'javascript:alert(1)']);
+
+        $this->assertSame('', $response['data']['redirectUrl']);
+    }
+
     public function testWithoutCurrentUrlTheRequestUrlIsUsed(): void
     {
         $_SERVER['HTTP_HOST']   = wp_parse_url(home_url(), PHP_URL_HOST);
@@ -77,14 +117,17 @@ class PopupTest extends AjaxTestCase
         $this->assertSame(home_url('/from-server/'), $response['data']['redirectUrl']);
     }
 
-    public function testLoadingStateWaitsOneSecondSoTheSpinnerDoesNotFlash(): void
+    /**
+     * The spinner delay lives in the browser; sleeping here would tie up a PHP worker.
+     */
+    public function testLoadingStateDoesNotMakeTheServerWait(): void
     {
         remove_filter('show_login_suppress_loading_state', '__return_true');
 
         $start    = microtime(true);
         $response = $this->ajax('show_login_check_popup');
 
-        $this->assertGreaterThanOrEqual(1.0, microtime(true) - $start);
+        $this->assertLessThan(0.5, microtime(true) - $start);
         $this->assertFalse($response['data']['suppressLoading']);
     }
 
