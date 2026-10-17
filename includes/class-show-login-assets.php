@@ -137,17 +137,21 @@ class Show_Login_Assets {
     /**
      * Get redirect URL (current URL without sl parameter)
      *
+     * @param string|null $current_url The page the visitor is on, or null for the current request's URL.
+     *                                 An empty string stays empty, which makes the page reload after login.
      * @return string Redirect URL.
      */
-    public function get_redirect_url(): string {
-        $current_url = '';
+    public function get_redirect_url(?string $current_url = null): string {
+        if ($current_url === null) {
+            $current_url = '';
 
-        if (isset($_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI'])) {
-            $protocol = is_ssl() ? 'https://' : 'http://';
-            // Sanitized as a whole by esc_url_raw() below.
-            $http_host = wp_unslash($_SERVER['HTTP_HOST']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $request_uri = wp_unslash($_SERVER['REQUEST_URI']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $current_url = esc_url_raw($protocol . $http_host . $request_uri);
+            if (isset($_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI'])) {
+                $protocol = is_ssl() ? 'https://' : 'http://';
+                // Sanitized as a whole by esc_url_raw() below.
+                $http_host = wp_unslash($_SERVER['HTTP_HOST']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                $request_uri = wp_unslash($_SERVER['REQUEST_URI']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                $current_url = esc_url_raw($protocol . $http_host . $request_uri);
+            }
         }
 
         // Remove all popup trigger parameters from URL

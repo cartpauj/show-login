@@ -54,13 +54,6 @@ class Show_Login {
     private Show_Login_Assets $assets;
 
     /**
-     * Rate limiter
-     *
-     * @var Show_Login_Rate_Limiter
-     */
-    private Show_Login_Rate_Limiter $rate_limiter;
-
-    /**
      * Authenticator
      *
      * @var Show_Login_Authenticator
@@ -106,7 +99,6 @@ class Show_Login {
      */
     private function load_dependencies(): void {
         require_once $this->plugin_path . 'includes/class-show-login-assets.php';
-        require_once $this->plugin_path . 'includes/class-show-login-rate-limiter.php';
         require_once $this->plugin_path . 'includes/class-show-login-authenticator.php';
         require_once $this->plugin_path . 'includes/class-show-login-popup.php';
         require_once $this->plugin_path . 'includes/class-show-login-turnstile.php';
@@ -120,8 +112,7 @@ class Show_Login {
      */
     private function init_components(): void {
         $this->assets = new Show_Login_Assets(self::VERSION, $this->plugin_url);
-        $this->rate_limiter = new Show_Login_Rate_Limiter();
-        $this->authenticator = new Show_Login_Authenticator($this->rate_limiter);
+        $this->authenticator = new Show_Login_Authenticator();
         $this->popup = new Show_Login_Popup($this->plugin_path, $this->assets);
     }
 

@@ -115,6 +115,15 @@
             showLoadingPopup();
         }
 
+        // Keep the spinner up for at least a second so it doesn't flash.
+        // (Done here, not on the server, so no PHP worker sits idle.)
+        const spinnerShownAt = Date.now();
+        // Returns a promise so errors in the next step still reach .catch().
+        const afterSpinner = function() {
+            const wait = shouldSuppressLoading ? 0 : Math.max(0, 1000 - (Date.now() - spinnerShownAt));
+            return new Promise(resolve => setTimeout(resolve, wait));
+        };
+
         // Load Turnstile script first (if needed), then check popup
         loadTurnstileScript(function() {
             // Get current page URL (for redirect after login)
@@ -130,7 +139,7 @@
                 body: 'action=show_login_check_popup&current_url=' + encodeURIComponent(currentUrl)
             })
             .then(response => response.json())
-            .then(data => {
+            .then(data => afterSpinner().then(function() {
                 if (data.success && data.data.show) {
                     // User is logged out - show form (with or without loading messages)
                     if (shouldSuppressLoading) {
@@ -147,7 +156,7 @@
                     }
                     // Otherwise suppress is enabled, nothing to show
                 }
-            })
+            }))
             .catch(error => {
                 // On error, close the loading popup if it exists
                 closePopup();

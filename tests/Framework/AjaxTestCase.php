@@ -39,7 +39,7 @@ abstract class AjaxTestCase extends WP_Ajax_UnitTestCase
             return $header;
         }, 10, 2);
 
-        // Keep the popup-check endpoint from sleep(1)-ing in every test.
+        // Tests expect the popup-check endpoint to report suppressLoading as true.
         add_filter('show_login_suppress_loading_state', '__return_true');
     }
 

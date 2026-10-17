@@ -20,7 +20,6 @@ class TurnstileTest extends AjaxTestCase
     public function set_up(): void
     {
         parent::set_up();
-        $_SERVER['REMOTE_ADDR'] = '203.0.113.30';
         $this->make_user();
     }
 
