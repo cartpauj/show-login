@@ -103,6 +103,7 @@ class Show_Login {
         require_once $this->plugin_path . 'includes/class-show-login-popup.php';
         require_once $this->plugin_path . 'includes/class-show-login-turnstile.php';
         require_once $this->plugin_path . 'includes/class-show-login-two-factor.php';
+        require_once $this->plugin_path . 'includes/class-show-login-wordfence.php';
         require_once $this->plugin_path . 'includes/class-show-login-social-login.php';
         require_once $this->plugin_path . 'includes/class-show-login-google.php';
     }

@@ -98,6 +98,14 @@ class Show_Login_Authenticator {
      * @param WP_Error $error The error object.
      */
     private function handle_login_failure(WP_Error $error): void {
+        // Right password, but Wordfence wants a 2FA code: ask for it in the popup.
+        if (Show_Login_Wordfence::is_code_required($error)) {
+            wp_send_json_error([
+                'message' => __('Enter the code from your authenticator app.', 'show-login'),
+                'code_required' => true,
+            ]);
+        }
+
         // Sanitize error message to prevent username enumeration
         $error_message = $this->sanitize_login_error($error);
 

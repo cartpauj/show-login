@@ -30,6 +30,7 @@ abstract class AjaxTestCase extends WP_Ajax_UnitTestCase
         $this->server_backup = $_SERVER;
         $this->status        = null;
         \Two_Factor_Core::reset();
+        \show_login_test_wordfence_reset();
         \show_login_test_turnstile_reset();
         \show_login_test_social_reset();
         \Show_Login_Test_Google::reset();

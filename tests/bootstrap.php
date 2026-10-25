@@ -51,6 +51,7 @@ register_shutdown_function(static function () use ($show_login_buffer_level): vo
 tests_add_filter('muplugins_loaded', static function () use ($show_login_root): void {
     // Stand-ins for the optional plugins Show Login integrates with.
     require_once $show_login_root . '/tests/Fixtures/two-factor.php';
+    require_once $show_login_root . '/tests/Fixtures/wordfence.php';
     require_once $show_login_root . '/tests/Fixtures/turnstile.php';
     require_once $show_login_root . '/tests/Fixtures/social-login.php';
     require_once $show_login_root . '/tests/Fixtures/login-with-google.php';

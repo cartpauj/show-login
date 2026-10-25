@@ -26,6 +26,7 @@ abstract class TestCase extends WP_UnitTestCase
         parent::set_up();
         $this->server_backup = $_SERVER;
         \Two_Factor_Core::reset();
+        \show_login_test_wordfence_reset();
         \show_login_test_turnstile_reset();
         \show_login_test_social_reset();
         \Show_Login_Test_Google::reset();
