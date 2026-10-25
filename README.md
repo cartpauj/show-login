@@ -8,7 +8,7 @@ A lightweight WordPress plugin that provides a front-end login popup triggered b
 - **Pure JavaScript** - No jQuery or other libraries required
 - **Cache Compatible** - Works perfectly with all page caching solutions (WP Rocket, LiteSpeed, etc.)
 - **Turnstile Integration** - Automatic integration with [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) plugin for CAPTCHA protection
-- **Two-Factor Authentication** - Automatic integration with [Two Factor](https://wordpress.org/plugins/two-factor/) plugin with seamless redirect flow
+- **Two-Factor Authentication** - Automatic integration with [Two Factor](https://wordpress.org/plugins/two-factor/) plugin with seamless redirect flow, and with [Wordfence](https://wordpress.org/plugins/wordfence/) 2FA right in the popup
 - **Social Login** - Shows the buttons from MemberPress and WishList Member Social Login, and from [Login with Google](https://wordpress.org/plugins/login-with-google/), sending people back to the page they were on
 - **Secure** - Nonce verification, username enumeration prevention, and proper sanitization. Works with your security plugin for login limits
 - **Fast UX** - Instant loading spinner with smooth transitions
@@ -281,6 +281,27 @@ The Two Factor plugin uses complex interactive forms (TOTP codes, backup codes, 
 - JavaScript automatically redirects to the 2FA form
 - After 2FA completion, user is redirected back to `redirect_to` URL (original page)
 
+## Wordfence Two-Factor Integration
+
+Users with [Wordfence](https://wordpress.org/plugins/wordfence/) two-factor authentication can finish logging in without leaving the popup.
+
+### How It Works
+
+1. User enters username and password in the popup
+2. If the password is right and Wordfence wants a 2FA code, the popup shows a **Two-Factor Code** field with the message "Enter the code from your authenticator app."
+3. User enters the code from their authenticator app (or a Wordfence recovery code) and clicks **Log In** again
+4. Wordfence checks the code, and the user is logged in and stays on the same page
+
+A wrong code shows Wordfence's own error and keeps the code field open. A wrong password shows the usual generic error, so the popup never reveals whether the password was right.
+
+### Technical Notes
+
+- Active only when Wordfence Login Security is installed (`\WordfenceLS\Controller_WordfenceLS` exists)
+- The code field is added with the `show_login_form_middle` action, hidden and disabled until it's needed, so it isn't sent with normal logins
+- When `wp_signon()` fails with Wordfence's `wfls_twofactor_required` error, the response includes `code_required: true`
+- The code is sent in Wordfence's own `wfls-token` field, so Wordfence validates it during `wp_signon()` exactly as it does on `wp-login.php`
+- Wordfence's reCAPTCHA option isn't supported in the popup
+
 ## Social Login Integration
 
 Show Login puts social login buttons at the top of the popup, above an "or" divider, when one of these is installed and set up:
@@ -414,6 +435,11 @@ add_filter('show_login_remember_label', function($label) {
 
 add_filter('show_login_submit_label', function($label) {
     return 'Sign In';
+});
+
+// Wordfence 2FA code field (only shown to users who need it)
+add_filter('show_login_2fa_code_label', function($label) {
+    return 'Authenticator Code';
 });
 ```
 

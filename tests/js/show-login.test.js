@@ -431,6 +431,62 @@ describe('logging in', () => {
         expect($('#show-login-error').textContent).toBe('Hmm.');
     });
 
+    describe('Wordfence two-factor code', () => {
+        // Mirrors Show_Login_Wordfence::render_code_field().
+        const CODE_FIELD = '<div class="show-login-field" id="show-login-2fa-field" hidden>'
+            + '<input type="text" id="show-login-2fa-code" name="wfls-token" disabled /></div>';
+        const codeRequired = () => json({ success: false, data: { code_required: true, message: 'Enter the code from your authenticator app.' } });
+
+        test('a code request shows the code field', async () => {
+            await bootToForm(popupWith(CODE_FIELD));
+            global.fetch.mockResolvedValueOnce(codeRequired());
+
+            fillAndSubmit();
+            await jest.advanceTimersByTimeAsync(0);
+
+            expect($('#show-login-2fa-field').hidden).toBe(false);
+            expect($('#show-login-2fa-code').disabled).toBe(false);
+            expect(document.activeElement).toBe($('#show-login-2fa-code'));
+            expect($('#show-login-error').textContent).toBe('Enter the code from your authenticator app.');
+            expect($('#show-login-submit').disabled).toBe(false);
+        });
+
+        test('the code is sent with the next try', async () => {
+            await bootToForm(popupWith(CODE_FIELD));
+            global.fetch.mockResolvedValueOnce(codeRequired());
+            fillAndSubmit();
+            await jest.advanceTimersByTimeAsync(0);
+
+            global.fetch.mockResolvedValueOnce(json({ success: true, data: {} }));
+            $('#show-login-2fa-code').value = '123456';
+            fillAndSubmit();
+            await jest.advanceTimersByTimeAsync(0);
+
+            expect(lastFetchBody().get('wfls-token')).toBe('123456');
+            expect(window.location.href).toBe('http://example.org/page/');
+        });
+
+        test('the hidden code field is not sent with normal logins', async () => {
+            await bootToForm(popupWith(CODE_FIELD));
+            global.fetch.mockResolvedValueOnce(json({ success: true, data: {} }));
+
+            fillAndSubmit();
+            await jest.advanceTimersByTimeAsync(0);
+
+            expect(lastFetchBody().has('wfls-token')).toBe(false);
+        });
+
+        test('a code request without the field still shows the message', async () => {
+            await bootToForm();
+            global.fetch.mockResolvedValueOnce(codeRequired());
+
+            fillAndSubmit();
+            await jest.advanceTimersByTimeAsync(0);
+
+            expect($('#show-login-error').textContent).toBe('Enter the code from your authenticator app.');
+        });
+    });
+
     test('non-JSON responses show a generic error', async () => {
         await bootToForm();
         global.fetch.mockResolvedValueOnce({ headers: { get: () => 'text/html' } });

@@ -439,6 +439,11 @@
                     return;
                 }
 
+                // Wordfence wants a 2FA code: show the code field for the next try
+                if (data.data && data.data.code_required) {
+                    showCodeField();
+                }
+
                 // Show error message
                 showError(data.data.message || __('Login failed. Please try again.', 'show-login'));
                 submitBtn.disabled = false;
@@ -489,6 +494,22 @@
                 // Silent fail - widget will need manual refresh
             }
         }
+    }
+
+    /**
+     * Show the 2FA code field (rendered hidden and disabled by the Wordfence integration)
+     */
+    function showCodeField() {
+        const field = document.getElementById('show-login-2fa-field');
+        const input = document.getElementById('show-login-2fa-code');
+
+        if (!field || !input) {
+            return;
+        }
+
+        field.hidden = false;
+        input.disabled = false;
+        input.focus();
     }
 
     /**
