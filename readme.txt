@@ -4,7 +4,7 @@ Tags: login, popup, ajax, frontend, modal
 Requires at least: 5.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -254,6 +254,9 @@ add_filter('show_login_button_text_color', function($color) {
 
 == Upgrade Notice ==
 
+= 1.3.0 =
+People who use Wordfence two-factor authentication can now log in from the popup.
+
 = 1.2.0 =
 The built-in login attempt limit has been removed. Use a security plugin like Wordfence or Limit Login Attempts Reloaded to limit login attempts. It protects the popup automatically.
 
@@ -264,6 +267,10 @@ Adds social login buttons to the popup (MemberPress / WishList Member Social Log
 Initial release of Show Login. Enjoy seamless front-end login popups!
 
 == Changelog ==
+
+= 1.3.0 =
+* New: People who use Wordfence two-factor authentication can now log in from the popup. After their password, the popup asks for the code from their authenticator app. Before, they got a "CODE REQUIRED" error with nowhere to enter it.
+* New: The `show_login_2fa_code_label` filter changes the label on the code field.
 
 = 1.2.0 =
 * Breaking: The built-in login attempt limit is gone. It could be tricked with fake IP addresses and used to lock real people out. Use a security plugin like Wordfence, Limit Login Attempts Reloaded, or Solid Security instead. It protects the popup automatically. The `show_login_enable_rate_limiting`, `show_login_max_attempts`, `show_login_rate_limit_window`, and `show_login_client_ip` filters no longer do anything.

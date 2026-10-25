@@ -791,6 +791,10 @@ GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Changelog
 
+### 1.3.0
+- **New:** People who use Wordfence two-factor authentication can now log in from the popup. After their password, the popup asks for the code from their authenticator app. Before, they got a "CODE REQUIRED" error with nowhere to enter it.
+- **New:** The `show_login_2fa_code_label` filter changes the label on the code field.
+
 ### 1.2.0
 - **Breaking:** The built-in login attempt limit is gone. It could be tricked with fake IP addresses and used to lock real people out. Use a security plugin like Wordfence, Limit Login Attempts Reloaded, or Solid Security instead. It protects the popup automatically. The `show_login_enable_rate_limiting`, `show_login_max_attempts`, `show_login_rate_limit_window`, and `show_login_client_ip` filters no longer do anything.
 - **Fix:** The `show_login_redirect_url` filter now works. Before, it never ran in the popup.
