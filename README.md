@@ -819,6 +819,11 @@ GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Changelog
 
+### 1.4.0
+- **New:** After logging in from the popup, people can be sent to different places depending on who they are. For example, admins to the dashboard and everyone else back to the page they were on. The popup now follows WordPress's standard `login_redirect` filter, the same as the normal login page.
+- **Change:** If another plugin on your site already sets where people go after logging in, popup logins now follow it too. Before, the popup always reloaded the page. People using the Two Factor plugin already got this, so now everyone is treated the same. To keep people on the page no matter what, see the `show_login_login_redirect` filter in **Redirect Customization**.
+- **New:** The `show_login_login_redirect` filter changes where the popup sends someone after logging in. It runs after `login_redirect` and gets the user.
+
 ### 1.3.0
 - **New:** People who use Wordfence two-factor authentication can now log in from the popup. After their password, the popup asks for the code from their authenticator app. Before, they got a "CODE REQUIRED" error with nowhere to enter it.
 - **New:** The `show_login_2fa_code_label` filter changes the label on the code field.
