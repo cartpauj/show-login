@@ -363,6 +363,26 @@ describe('logging in', () => {
         expect(window.location.href).toBe('http://example.org/page/');
     });
 
+    test('goes where the server says after login (the site\'s login redirect rules)', async () => {
+        await bootToForm();
+        global.fetch.mockResolvedValueOnce(json({ success: true, data: { message: 'ok', redirect_url: 'http://example.org/wp-admin/' } }));
+
+        fillAndSubmit();
+
+        await jest.advanceTimersByTimeAsync(0);
+        expect(window.location.href).toBe('http://example.org/wp-admin/');
+    });
+
+    test('an empty redirect from the server falls back to this page', async () => {
+        await bootToForm();
+        global.fetch.mockResolvedValueOnce(json({ success: true, data: { message: 'ok', redirect_url: '' } }));
+
+        fillAndSubmit();
+
+        await jest.advanceTimersByTimeAsync(0);
+        expect(window.location.href).toBe('http://example.org/page/');
+    });
+
     test('unchecked remember-me is not sent', async () => {
         await bootToForm();
         global.fetch.mockResolvedValueOnce(json({ success: true }));

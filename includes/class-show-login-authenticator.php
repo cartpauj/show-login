@@ -137,7 +137,44 @@ class Show_Login_Authenticator {
 
         wp_send_json_success([
             'message' => __('Login successful! Redirecting...', 'show-login'),
+            'redirect_url' => $this->get_login_redirect($user),
         ]);
+    }
+
+    /**
+     * Where to send someone after they log in.
+     *
+     * Starts from the page the popup was opened on, then runs WordPress's standard
+     * `login_redirect` filter, the same way wp-login.php and the Two Factor plugin do.
+     * That way a site's "after login, go here" rules (for example, sending admins to
+     * the dashboard) work in the popup too.
+     *
+     * @param WP_User $user The user who just logged in.
+     * @return string Redirect URL on this site, or an empty string to reload the page.
+     */
+    private function get_login_redirect(WP_User $user): string {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce checked in handle_login_ajax() before this runs.
+        $requested = isset($_POST['redirect_to']) ? esc_url_raw(wp_unslash($_POST['redirect_to'])) : '';
+        $requested = $requested !== '' ? wp_validate_redirect($requested, '') : '';
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
+        $redirect = apply_filters('login_redirect', $requested, $requested, $user);
+
+        /**
+         * Filter where the popup sends someone after they log in.
+         *
+         * Runs after WordPress's `login_redirect` filter. Return `$requested` to always
+         * keep people on the page they were on.
+         *
+         * @since 1.4.0
+         * @param string  $redirect  Where they'll be sent (after `login_redirect`).
+         * @param string  $requested The page the popup was opened on (empty if unknown).
+         * @param WP_User $user      The user who just logged in.
+         */
+        $redirect = (string) apply_filters('show_login_login_redirect', $redirect, $requested, $user);
+
+        // Only ever send people to pages on this site.
+        return $redirect === '' ? '' : wp_validate_redirect($redirect, $requested);
     }
 
     /**

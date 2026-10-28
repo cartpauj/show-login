@@ -107,6 +107,8 @@ If the URL already has parameters, use `&sl=true`:
 
 The page reloads with the user logged in. All URL parameters are preserved except the `sl=true` parameter is removed. The user stays on the same page they were viewing.
 
+If your site has "after login, go here" rules (WordPress's `login_redirect` filter, which many plugins use), the popup follows them too, the same as the normal login page. For example, you can send admins to the dashboard and keep everyone else on the page.
+
 = Does this work with page caching? =
 
 Yes! The plugin is fully compatible with all page caching solutions (WP Rocket, W3 Total Cache, Cloudflare, etc.). It checks login status via AJAX, which always executes fresh PHP with the user's cookies, bypassing the page cache completely. Security nonces are also generated fresh per user via AJAX and never cached, ensuring maximum security even with aggressive caching.
@@ -228,6 +230,19 @@ add_filter('show_login_redirect_url', function($redirect_url, $current_url) {
 }, 10, 2);
 `
 
+= Send different people to different places after login =
+
+The popup runs WordPress's `login_redirect` filter after a successful login, so you can decide by user:
+
+`
+add_filter('login_redirect', function($redirect_to, $requested, $user) {
+    if ($user instanceof WP_User && $user->has_cap('manage_options')) {
+        return admin_url();
+    }
+    return $redirect_to;
+}, 10, 3);
+`
+
 = Log successful logins =
 
 `
@@ -334,7 +349,8 @@ Show Login provides extensive hooks for customization and integration.
 * `show_login_button_text_color` - Customize button text color
 * `show_login_credentials` - Modify credentials before authentication
 * `show_login_error_message` - Customize error messages
-* `show_login_redirect_url` - Modify redirect destination
+* `show_login_redirect_url` - Modify redirect destination (set before login, same for everyone)
+* `show_login_login_redirect` - Modify redirect destination after a successful login (runs after WordPress's `login_redirect`; gets the user)
 * `show_login_suppress_loading_state` - Suppress loading spinner and status messages
 
 For complete developer documentation, examples, and code snippets, visit the [GitHub repository](https://github.com/cartpauj/show-login).

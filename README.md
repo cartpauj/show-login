@@ -64,6 +64,7 @@ When a user successfully logs in:
 - The page reloads with them logged in
 - All URL parameters are preserved
 - Only the popup trigger parameter is removed (e.g., `sl` or `show_login`)
+- If your site has "after login, go here" rules (WordPress's `login_redirect` filter, used by many plugins), they're followed instead, the same as on `wp-login.php`. See **Redirect Customization**.
 
 ### User Experience
 
@@ -279,7 +280,7 @@ The Two Factor plugin uses complex interactive forms (TOTP codes, backup codes, 
 - URL includes: `action=validate_2fa`, `wp-auth-id`, `wp-auth-nonce`, `redirect_to`
 - Clears temporary auth cookies (2FA not complete yet)
 - JavaScript automatically redirects to the 2FA form
-- After 2FA completion, user is redirected back to `redirect_to` URL (original page)
+- After 2FA completion, Two Factor runs WordPress's `login_redirect` filter and sends them there: the original page, unless a rule says otherwise. The popup hands Two Factor the original page, so the filter runs once, not twice.
 
 ## Wordfence Two-Factor Integration
 
@@ -462,12 +463,39 @@ add_filter('show_login_error_message', function($message, $error) {
 ```
 
 **Redirect Customization:**
+
+There are two places to decide where people go after logging in:
+
+1. **Before anyone logs in**, `show_login_redirect_url` sets the default for everyone who opens the popup on a page:
+
 ```php
 add_filter('show_login_redirect_url', function($redirect_url, $current_url) {
     // Always redirect to a specific page after login
     return home_url('/dashboard');
 }, 10, 2);
 ```
+
+2. **After a successful login**, the popup runs WordPress's standard `login_redirect` filter with the user, the same way `wp-login.php` and the Two Factor plugin do. So per-user rules work, and so do plugins that already use `login_redirect`:
+
+```php
+// Admins go to the dashboard; everyone else stays on the page they were on.
+add_filter('login_redirect', function($redirect_to, $requested, $user) {
+    if ($user instanceof WP_User && $user->has_cap('manage_options')) {
+        return admin_url();
+    }
+    return $redirect_to;
+}, 10, 3);
+```
+
+Then `show_login_login_redirect` runs, for popup-only rules. Its arguments are the URL after `login_redirect`, the page the popup was opened on, and the user. To always keep people on the page they were on, whatever other plugins say:
+
+```php
+add_filter('show_login_login_redirect', function($redirect, $requested, $user) {
+    return $requested;
+}, 10, 3);
+```
+
+Whatever these return, people are only ever sent to pages on your own site.
 
 **Button Styling:**
 ```php
