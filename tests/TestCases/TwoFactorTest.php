@@ -43,6 +43,23 @@ class TwoFactorTest extends AjaxTestCase
         $this->assertSame(5, has_action('wp_login', [Show_Login_Two_Factor::class, 'handle_two_factor_redirect']));
     }
 
+    /**
+     * Two Factor runs login_redirect itself once the code is entered, so the popup must hand it the
+     * original page (not an already-filtered one), or the filter would run twice.
+     */
+    public function testTwoFactorGetsTheOriginalPageNotAFilteredOne(): void
+    {
+        Two_Factor_Core::$users_with_2fa = [$this->user->ID];
+        add_filter('login_redirect', static fn() => admin_url());
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', [
+            'redirect_to' => home_url('/members/'),
+        ]));
+
+        parse_str(wp_parse_url($response['data']['redirect_url'], PHP_URL_QUERY), $query);
+        $this->assertSame(home_url('/members/'), $query['redirect_to']);
+    }
+
     public function testUsersWithTwoFactorAreSentToTheTwoFactorForm(): void
     {
         Two_Factor_Core::$users_with_2fa = [$this->user->ID];

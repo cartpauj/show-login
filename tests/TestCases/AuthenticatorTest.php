@@ -242,4 +242,100 @@ class AuthenticatorTest extends AjaxTestCase
 
         $this->assertFalse(has_action('wp_ajax_show_login_authenticate'));
     }
+
+    public function testSuccessSendsPeopleBackToThePageTheyWereOn(): void
+    {
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['redirect_to' => home_url('/page/')]));
+
+        $this->assertSame(home_url('/page/'), $response['data']['redirect_url']);
+    }
+
+    public function testNoRequestedPageMeansReloadThePage(): void
+    {
+        $response = $this->ajax('show_login_authenticate', $this->login_post());
+
+        $this->assertSame('', $response['data']['redirect_url']);
+    }
+
+    public function testLoginRedirectFilterDecidesWhereTheyGo(): void
+    {
+        $seen = null;
+        add_filter('login_redirect', static function ($redirect_to, $requested, $user) use (&$seen) {
+            $seen = [$redirect_to, $requested, $user->user_login];
+            return admin_url();
+        }, 10, 3);
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['redirect_to' => home_url('/page/')]));
+
+        $this->assertSame([home_url('/page/'), home_url('/page/'), 'alice'], $seen, 'login_redirect gets the same arguments as in wp-login.php.');
+        $this->assertSame(admin_url(), $response['data']['redirect_url']);
+    }
+
+    public function testLoginRedirectCanDependOnWhoLoggedIn(): void
+    {
+        $this->make_user('bob');
+        add_filter('login_redirect', static function ($redirect_to, $requested, $user) {
+            return 'bob' === $user->user_login ? home_url('/staff/') : $redirect_to;
+        }, 10, 3);
+
+        $alice = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['redirect_to' => home_url('/page/')]));
+        wp_set_current_user(0);
+        $bob = $this->ajax('show_login_authenticate', $this->login_post('bob', 'correct horse', ['redirect_to' => home_url('/page/')]));
+
+        $this->assertSame(home_url('/page/'), $alice['data']['redirect_url']);
+        $this->assertSame(home_url('/staff/'), $bob['data']['redirect_url']);
+    }
+
+    public function testShowLoginFilterRunsAfterLoginRedirect(): void
+    {
+        add_filter('login_redirect', static fn() => admin_url());
+        $seen = null;
+        add_filter('show_login_login_redirect', static function ($redirect, $requested, $user) use (&$seen) {
+            $seen = [$redirect, $requested, $user->user_login];
+            return $requested; // Opt out: always stay on the page.
+        }, 10, 3);
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['redirect_to' => home_url('/page/')]));
+
+        $this->assertSame([admin_url(), home_url('/page/'), 'alice'], $seen);
+        $this->assertSame(home_url('/page/'), $response['data']['redirect_url']);
+    }
+
+    public function testOffSiteRedirectFromAFilterFallsBackToThePage(): void
+    {
+        add_filter('login_redirect', static fn() => 'https://evil.example/');
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['redirect_to' => home_url('/page/')]));
+
+        $this->assertSame(home_url('/page/'), $response['data']['redirect_url']);
+    }
+
+    public function testOffSiteRequestedPageIsIgnored(): void
+    {
+        $seen = null;
+        add_filter('login_redirect', static function ($redirect_to) use (&$seen) {
+            $seen = $redirect_to;
+            return $redirect_to;
+        });
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['redirect_to' => 'https://evil.example/']));
+
+        $this->assertSame('', $seen, 'An off-site page is never passed on.');
+        $this->assertSame('', $response['data']['redirect_url']);
+    }
+
+    public function testFailedLoginsDontRunLoginRedirect(): void
+    {
+        $ran = false;
+        add_filter('login_redirect', static function ($redirect_to) use (&$ran) {
+            $ran = true;
+            return $redirect_to;
+        });
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'wrong'));
+
+        $this->assertFalse($response['success']);
+        $this->assertFalse($ran);
+        $this->assertArrayNotHasKey('redirect_url', $response['data']);
+    }
 }

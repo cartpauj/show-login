@@ -429,8 +429,9 @@
         })
         .then(data => {
             if (data.success) {
-                // Successful login - reload page
-                window.location.href = showLoginData.redirectUrl;
+                // Successful login: go where the server says (it applies the site's
+                // login redirect rules), or back to this page.
+                window.location.href = (data.data && data.data.redirect_url) || showLoginData.redirectUrl;
             } else {
                 // Check if 2FA is required
                 if (data.data && data.data.two_factor_required && data.data.redirect_url) {

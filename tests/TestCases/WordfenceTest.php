@@ -92,6 +92,20 @@ class WordfenceTest extends AjaxTestCase
         $this->assertTrue($response['success']);
     }
 
+    public function testCorrectCodeFollowsLoginRedirect(): void
+    {
+        $this->turn_on_2fa();
+        add_filter('login_redirect', static fn() => admin_url());
+
+        $asked = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['redirect_to' => home_url('/page/')]));
+        $this->assertArrayNotHasKey('redirect_url', $asked['data'], 'No redirect until the code is in.');
+
+        $response = $this->ajax('show_login_authenticate', $this->login_post('alice', 'correct horse', ['wfls-token' => '123456', 'redirect_to' => home_url('/page/')]));
+
+        $this->assertTrue($response['success']);
+        $this->assertSame(admin_url(), $response['data']['redirect_url']);
+    }
+
     public function testWrongCodeShowsWordfencesError(): void
     {
         $this->turn_on_2fa();
